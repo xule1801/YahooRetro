@@ -12,6 +12,8 @@ export const ownerUrl = () =>
   `postgres://yc_owner:${encodeURIComponent(process.env.YC_PG_OWNER_PASSWORD!)}@127.0.0.1:${process.env.YC_PG_PORT ?? 5433}/yahoochat`;
 
 export async function resetDb() {
+  // Chốt chặn: lệnh này XÓA SẠCH dữ liệu — chỉ được chạy trên bộ máy chủ test.
+  if (process.env.YC_TEST_STACK !== "1" || process.env.YC_PG_PORT === "5433") throw new Error("resetDb bị chặn: không phải database test");
   const c = new pg.Client({ connectionString: ownerUrl() });
   await c.connect();
   const { rows } = await c.query(`SELECT tablename FROM pg_tables WHERE schemaname='app' AND tablename <> 'schema_migrations'`);

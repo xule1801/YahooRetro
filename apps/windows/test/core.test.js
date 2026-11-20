@@ -21,17 +21,27 @@ test("ánh xạ presence", () => {
 
 test("Buzz: cửa sổ đang hiện → rung một lần, không thông báo", () => {
   assert.deepEqual(decideBuzzEffect({ nowMs: now, expiresAtMs: now + 5000, window: { visible: true, minimized: false }, settings: S }),
-    { accept: true, shake: true, notify: false, sound: true, flash: false });
+    { accept: true, open: false, shake: true, notify: false, sound: true, flash: false });
 });
-test("Buzz: thu nhỏ hoặc chưa mở → chỉ thông báo, không rung", () => {
-  for (const window of [{ visible: true, minimized: true }, null]) {
-    const r = decideBuzzEffect({ nowMs: now, expiresAtMs: now + 5000, window, settings: S });
-    assert.equal(r.shake, false); assert.equal(r.notify, true);
-  }
+test("Buzz: cửa sổ thu nhỏ → chỉ thông báo, không rung, không bung ra (thiết kế §3.5)", () => {
+  const r = decideBuzzEffect({ nowMs: now, expiresAtMs: now + 5000, window: { visible: true, minimized: true }, settings: S });
+  assert.equal(r.shake, false); assert.equal(r.notify, true); assert.equal(r.open, false);
+});
+test("Buzz: chưa mở cửa sổ chat → tự mở cửa sổ và rung (yêu cầu chủ dự án 2026-11-20)", () => {
+  const r = decideBuzzEffect({ nowMs: now, expiresAtMs: now + 5000, window: null, settings: S });
+  assert.deepEqual(r, { accept: true, open: true, shake: true, notify: false, sound: true, flash: false });
+});
+test("Buzz: chưa mở + giảm chuyển động → mở cửa sổ, nhấp nháy thay rung", () => {
+  const r = decideBuzzEffect({ nowMs: now, expiresAtMs: now + 5000, window: null, settings: { ...S, reduceMotion: true } });
+  assert.equal(r.open, true); assert.equal(r.shake, false); assert.equal(r.flash, true);
+});
+test("Buzz: chưa mở + tắt tự mở cửa sổ → chỉ thông báo như cũ", () => {
+  const r = decideBuzzEffect({ nowMs: now, expiresAtMs: now + 5000, window: null, settings: { ...S, autoOpenChat: false } });
+  assert.equal(r.open, false); assert.equal(r.shake, false); assert.equal(r.notify, true);
 });
 test("Buzz: quá hạn (nhận trễ sau reconnect) → bỏ qua hoàn toàn", () => {
   const r = decideBuzzEffect({ nowMs: now + 5000, expiresAtMs: now + 5000, window: { visible: true, minimized: false }, settings: S });
-  assert.deepEqual(r, { accept: false, shake: false, notify: false, sound: false });
+  assert.deepEqual(r, { accept: false, open: false, shake: false, notify: false, sound: false });
 });
 test("Buzz: giảm chuyển động / tắt rung / tắt âm thanh", () => {
   const w = { visible: true, minimized: false };
@@ -93,4 +103,64 @@ test("đầu mối mạng: bắt buộc mã hóa trừ máy local hoặc chế �
   assert.throws(() => assertSecureEndpoint("xmpp://chat.example.vn:5222", false), /mã hóa/);
   assert.throws(() => assertSecureEndpoint("xmpp://127.0.0.1:5222", false), /mã hóa/); // STARTTLS có thể bị gỡ
   assert.doesNotThrow(() => assertSecureEndpoint("xmpp://127.0.0.1:5222", true));
+});
+
+import { ChatCore } from "../core/chat-core.js";
+
+test("địa chỉ máy chủ sai (trả HTML) → thông báo dễ hiểu, không lộ lỗi JSON", async () => {
+  const fetchImpl = async () => new Response("<!doctype html><html><head></head></html>", { status: 200, headers: { "content-type": "text/html" } });
+  const c = new ChatCore({ apiBase: "http://127.0.0.1:8080", fetchImpl });
+  await assert.rejects(c.registerStart("X", "email", "a@b.c"), (e) => {
+    assert.equal(e.code, "BAD_SERVER");
+    assert.match(e.message, /127\.0\.0\.1:8080/);
+    assert.match(e.message, /Máy chủ/);
+    assert.doesNotMatch(e.message, /Unexpected token|JSON/);
+    return true;
+  });
+});
+
+test("không kết nối được máy chủ → thông báo dễ hiểu", async () => {
+  const fetchImpl = async () => { throw new TypeError("fetch failed"); };
+  const c = new ChatCore({ apiBase: "http://127.0.0.1:9", fetchImpl });
+  await assert.rejects(c.login("a", "b"), (e) => {
+    assert.equal(e.code, "NETWORK");
+    assert.match(e.message, /Không kết nối được/);
+    return true;
+  });
+});
+
+import { decideIncomingMessage } from "../core/model.js";
+import { xml } from "@xmpp/client";
+import { Xmlns } from "@yc/contracts";
+
+test("tin nhắn đến: chưa mở cửa sổ → tự mở; đã mở → không mở thêm; thu nhỏ/không focus → nhấp nháy; tắt tùy chọn → không mở", () => {
+  assert.deepEqual(decideIncomingMessage({ window: null, settings: S }), { open: true, flash: false });
+  assert.deepEqual(decideIncomingMessage({ window: { visible: true, minimized: false, focused: true }, settings: S }), { open: false, flash: false });
+  assert.deepEqual(decideIncomingMessage({ window: { visible: true, minimized: false, focused: false }, settings: S }), { open: false, flash: true });
+  assert.deepEqual(decideIncomingMessage({ window: { visible: true, minimized: true, focused: false }, settings: S }), { open: false, flash: true });
+  assert.deepEqual(decideIncomingMessage({ window: null, settings: { ...S, autoOpenChat: false } }), { open: false, flash: false });
+});
+
+test("ChatCore: chỉ tin đến TRỰC TIẾP phát 'incoming-message'; tin từ đồng bộ lịch sử thì không", () => {
+  const c = new ChatCore({ apiBase: "http://127.0.0.1:1" });
+  c.me = { userId: "11111111-1111-1111-1111-111111111111", jid: "u11111111111111111111111111111111@localhost" };
+  const peerJid = "u22222222222222222222222222222222@localhost";
+  const got = [];
+  c.on("incoming-message", (e) => got.push(e));
+  c.onMessage(xml("message", { from: peerJid + "/r", type: "chat", id: "o1" }, xml("body", {}, "chào"), xml("origin-id", { xmlns: Xmlns.SID, id: "o1" })));
+  assert.deepEqual(got, [{ peer: "22222222-2222-2222-2222-222222222222" }]);
+  c.onMessage(xml("message", { from: peerJid + "/r", type: "chat", id: "o1" }, xml("body", {}, "chào"), xml("origin-id", { xmlns: Xmlns.SID, id: "o1" })));
+  assert.equal(got.length, 1, "bản trùng không mở lại cửa sổ");
+  c.ingestArchived(xml("result", { xmlns: Xmlns.MAM, id: "a2" }, xml("forwarded", { xmlns: "urn:xmpp:forward:0" },
+    xml("delay", { xmlns: "urn:xmpp:delay", stamp: new Date().toISOString() }),
+    xml("message", { from: peerJid + "/r", to: c.me.jid, type: "chat" }, xml("body", {}, "cũ"), xml("origin-id", { xmlns: Xmlns.SID, id: "o2" })))));
+  assert.equal(got.length, 1, "tin lịch sử không bật cửa sổ");
+});
+
+test("chế độ bỏ kiểm tra chứng chỉ (dev/dùng thử) CHỈ áp dụng cho máy chủ trên chính máy này", () => {
+  assert.doesNotThrow(() => assertSecureEndpoint("xmpps://127.0.0.1:5223", true));
+  assert.doesNotThrow(() => assertSecureEndpoint("http://localhost:8090", true));
+  assert.throws(() => assertSecureEndpoint("https://chat.example.vn", true), /chỉ dùng cho máy chủ trên chính máy này/);
+  assert.throws(() => assertSecureEndpoint("xmpps://10.0.0.5:5223", true), /chỉ dùng cho máy chủ trên chính máy này/);
+  assert.throws(() => new ChatCore({ apiBase: "https://chat.example.vn", insecureTls: true }), /chỉ dùng cho máy chủ trên chính máy này/);
 });

@@ -10,11 +10,13 @@
     "sync-contracts": "node scripts/sync-contracts.js",
     "prestart": "npm run sync-contracts",
     "start": "node scripts/start.js",
-    "test": "node --test test/core.test.js",
+    "test": "node --test test/core.test.js test/smileys.test.js",
     "test:e2e": "node --test --test-concurrency=1 test/core.e2e.test.js",
-    "test:ui": "node --test --test-concurrency=1 test/ui.e2e.test.js",
+    "test:ui": "node --test --test-concurrency=1 test/ui.e2e.test.js test/session.e2e.test.js test/security.e2e.test.js",
     "predist": "npm run sync-contracts",
-    "dist": "electron-builder --win nsis --x64"
+    "dist": "electron-builder --win nsis --x64",
+    "icon": "node scripts/run-electron.js scripts/render-icon.cjs",
+    "test:exe": "node --test --test-concurrency=1 test/fuses.test.js"
   },
   "build": {
     "appId": "local.zahu.messenger",
@@ -27,7 +29,8 @@
       "package.json"
     ],
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "assets/icon.png"
     },
     "nsis": {
       "oneClick": false,
@@ -38,16 +41,25 @@
     "directories": {
       "output": "dist"
     },
-    "electronVersion": "43.8.12"
+    "electronVersion": "43.8.12",
+    "electronFuses": {
+      "runAsNode": false,
+      "enableNodeOptionsEnvironmentVariable": false,
+      "enableNodeCliInspectArguments": false,
+      "enableCookieEncryption": true,
+      "onlyLoadAppFromAsar": true,
+      "enableEmbeddedAsarIntegrityValidation": true
+    }
   },
   "devDependencies": {
+    "@electron/fuses": "^1.8.0",
     "electron": "43.8.12",
     "electron-builder": "^26.18.0",
     "playwright-core": "^1.65.1"
   },
   "dependencies": {
-    "@yc/contracts": "1.0.0",
-    "@xmpp/client": "^0.14.0"
+    "@xmpp/client": "^0.14.0",
+    "@yc/contracts": "1.0.0"
   },
   "author": "Nhóm dự án Zahu!Messenger",
   "license": "UNLICENSED"

@@ -31,12 +31,22 @@ export class ChatCore extends EventEmitter {
 
   // ------------------------------------------------------------- HTTP API
   async api(method, path, body, headers = {}) {
-    const res = await this.fetch(this.apiBase + path, {
-      method, headers: { ...(body !== undefined ? { "content-type": "application/json" } : {}), ...(this.token ? { authorization: `Bearer ${this.token}` } : {}), ...headers },
-      body: body !== undefined ? JSON.stringify(body) : undefined,
-    });
+    let res;
+    try {
+      res = await this.fetch(this.apiBase + path, {
+        method, headers: { ...(body !== undefined ? { "content-type": "application/json" } : {}), ...(this.token ? { authorization: `Bearer ${this.token}` } : {}), ...headers },
+        body: body !== undefined ? JSON.stringify(body) : undefined,
+      });
+    } catch {
+      throw new ApiError(0, { error: { code: "NETWORK", message: `Không kết nối được máy chủ ${this.apiBase}. Kiểm tra máy chủ đã chạy chưa và địa chỉ trong mục "Máy chủ" ở màn hình đăng nhập.` } });
+    }
     const text = await res.text();
-    const data = text ? JSON.parse(text) : undefined;
+    let data;
+    try { data = text ? JSON.parse(text) : undefined; }
+    catch {
+      // Ví dụ: địa chỉ trỏ nhầm sang một website/ứng dụng khác trả về trang HTML.
+      throw new ApiError(res.status, { error: { code: "BAD_SERVER", message: `Địa chỉ ${this.apiBase} không phải máy chủ Zahu!Messenger. Kiểm tra mục "Máy chủ" ở màn hình đăng nhập.` } });
+    }
     if (!res.ok) {
       if (res.status === 401 && this.token && path !== "/v1/auth/login") this.emit("session-expired");
       throw new ApiError(res.status, data);
@@ -210,7 +220,10 @@ export class ChatCore extends EventEmitter {
       const originId = s.getChild("origin-id", Xmlns.SID)?.attrs.id ?? s.attrs.id ?? randomUUID();
       const stanzaId = s.getChildren("stanza-id", Xmlns.SID).find((x) => x.attrs.by === this.me?.jid)?.attrs.id;
       const { msg, added } = this.messages.upsert({ peer, originId, stanzaId, dir: "in", body, ts: this.now(), status: "delivered" }, this.now());
-      if (added) this.emit("message", msg);
+      if (added) {
+        this.emit("message", msg);
+        this.emit("incoming-message", { peer }); // chỉ tin đến trực tiếp (không phải đồng bộ lịch sử) → có thể bật cửa sổ chat
+      }
       // Gửi xác nhận đã chuyển — trừ khi đang Ẩn (receipt sẽ làm lộ là đang kết nối).
       if (s.getChild("request", Xmlns.RECEIPTS) && this.mode !== "invisible" && s.attrs.id) {
         this.x?.send(xml("message", { to: from, type: "chat" }, xml("received", { xmlns: Xmlns.RECEIPTS, id: s.attrs.id }))).catch(() => {});

@@ -5,10 +5,15 @@ import { dirname, resolve } from "node:path";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const API_DIR = resolve(ROOT, "services/api");
+// Test E2E chạy trên BỘ MÁY CHỦ RIÊNG (infra/.env.test) — không đụng môi trường dùng thử.
+const ENV_FILE = "--env-file=../../infra/.env.test";
+process.loadEnvFile(resolve(ROOT, "infra/.env.test"));
+if (process.env.YC_TEST_STACK !== "1") throw new Error("Từ chối chạy test: không phải bộ máy chủ test");
+const MAILPIT = `http://127.0.0.1:${process.env.YC_MAILPIT_HTTP_PORT}`;
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export async function startApi(port = 18080) {
-  const p = spawn(process.execPath, ["--env-file=../../infra/.env", "src/server.ts"], {
+  const p = spawn(process.execPath, [ENV_FILE, "src/server.ts"], {
     cwd: API_DIR, env: { ...process.env, YC_API_PORT: String(port), YC_LOG_LEVEL: "warn" }, stdio: ["ignore", "pipe", "pipe"],
   });
   let err = "";
@@ -24,7 +29,7 @@ export async function startApi(port = 18080) {
 }
 
 export function cli(...args) {
-  const out = execFileSync(process.execPath, ["--env-file=../../infra/.env", "src/cli.ts", ...args], { cwd: API_DIR, encoding: "utf8" });
+  const out = execFileSync(process.execPath, [ENV_FILE, "src/cli.ts", ...args], { cwd: API_DIR, encoding: "utf8" });
   return JSON.parse(out.slice(out.indexOf(out.trimStart()[0] === "{" ? "{" : "[")));
 }
 export const createInvite = () => cli("invite", "create", "--note", "e2e test").code;
@@ -32,10 +37,10 @@ export const createInvite = () => cli("invite", "create", "--note", "e2e test").
 /** Lấy OTP mới nhất gửi tới email từ Mailpit (SMTP thật, không ra Internet). */
 export async function emailOtp(address) {
   for (let i = 0; i < 50; i++) {
-    const r = await (await fetch(`http://127.0.0.1:8025/api/v1/search?query=${encodeURIComponent(`to:"${address}"`)}`)).json();
+    const r = await (await fetch(`${MAILPIT}/api/v1/search?query=${encodeURIComponent(`to:"${address}"`)}`)).json();
     const id = r.messages?.[0]?.ID;
     if (id) {
-      const m = await (await fetch(`http://127.0.0.1:8025/api/v1/message/${id}`)).json();
+      const m = await (await fetch(`${MAILPIT}/api/v1/message/${id}`)).json();
       const otp = m.Text?.match(/\b(\d{6})\b/)?.[1];
       if (otp) return otp;
     }

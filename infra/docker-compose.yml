@@ -1,4 +1,5 @@
 # Môi trường LOCAL/THỬ NGHIỆM. Secret lấy từ infra/.env (không commit). Xem docs/operations.md.
+# Bộ máy chủ riêng cho test tự động: -p yahoochat-test --env-file infra/.env.test (cổng và ổ dữ liệu riêng).
 name: yahoochat
 services:
   postgres:
@@ -25,12 +26,12 @@ services:
       YC_PROSODY_DB_PASSWORD: ${YC_PROSODY_DB_PASSWORD:?}
       YC_XMPP_TOKEN_SECRET: ${YC_XMPP_TOKEN_SECRET:?}
       YC_MESSAGE_TTL_DAYS: ${YC_MESSAGE_TTL_DAYS:-30}
-    ports: ["127.0.0.1:5222:5222", "127.0.0.1:5223:5223"]
+    ports: ["127.0.0.1:${YC_XMPP_PORT:-5222}:5222", "127.0.0.1:${YC_XMPPS_PORT:-5223}:5223"]
     volumes:
       - ./prosody/prosody.cfg.lua:/etc/prosody/prosody.cfg.lua:ro
       - ./prosody/plugins:/etc/prosody/yc_plugins:ro
   mailpit:
     image: axllent/mailpit:v1.27
-    ports: ["127.0.0.1:1025:1025", "127.0.0.1:8025:8025"]
+    ports: ["127.0.0.1:${YC_SMTP_PORT:-1025}:1025", "127.0.0.1:${YC_MAILPIT_HTTP_PORT:-8025}:8025"]
 volumes:
   pgdata:

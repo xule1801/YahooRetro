@@ -1,15 +1,18 @@
 // Main process — cửa sổ danh bạ + cửa sổ chat riêng, cầu nối IPC tới ChatCore, rung cửa sổ khi Buzz.
-import { app, BrowserWindow, ipcMain, Notification, safeStorage, shell } from "electron";
+import { app, BrowserWindow, ipcMain, Notification, safeStorage, session } from "electron";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { existsSync, readFileSync, writeFileSync, unlinkSync, mkdirSync } from "node:fs";
 import { ChatCore } from "../core/chat-core.js";
-import { decideBuzzEffect, mergeSettings } from "../core/model.js";
+import { decideBuzzEffect, decideIncomingMessage, mergeSettings } from "../core/model.js";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const RENDERER = join(HERE, "../renderer");
+const ICON = join(HERE, "../assets/icon.png"); // icon cửa sổ/taskbar (kết xuất từ renderer/logo.svg)
 if (process.env.YC_USER_DATA) { mkdirSync(process.env.YC_USER_DATA, { recursive: true }); app.setPath("userData", process.env.YC_USER_DATA); }
-app.setAppUserModelId("local.zahu.messenger");
+// Bản cài dùng đúng appId của bộ cài (khớp lối tắt Start Menu → taskbar lấy đúng icon).
+// Bản dev/test chạy bằng electron.exe (icon nguyên tử) dùng ID riêng để Windows không gộp chung nút taskbar và nhớ nhầm icon.
+app.setAppUserModelId(app.isPackaged ? "local.zahu.messenger" : "local.zahu.messenger.dev");
 
 // ---------------------------------------------------------------- Cài đặt & phiên
 const settingsFile = () => join(app.getPath("userData"), "settings.json");
@@ -41,6 +44,7 @@ function createCore() {
     core.on(ev, (payload) => broadcast(ev, payload));
   }
   core.on("buzz", onBuzz);
+  core.on("incoming-message", onIncomingMessage);
   core.on("session-expired", () => logout("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại."));
   return core;
 }
@@ -51,32 +55,54 @@ const chatWins = new Map(); // userId → BrowserWindow
 const webPreferences = { preload: join(HERE, "preload.cjs"), contextIsolation: true, sandbox: true, nodeIntegration: false, spellcheck: false };
 
 function lockDown(win) {
-  win.webContents.setWindowOpenHandler(({ url }) => { if (/^https?:/.test(url)) shell.openExternal(url); return { action: "deny" }; });
-  win.webContents.on("will-navigate", (e) => e.preventDefault());
   win.removeMenu();
 }
+// Phòng thủ chiều sâu cho MỌI webContents (kể cả nếu sau này có cửa sổ mới):
+// - không mở cửa sổ mới, không chuyển liên kết ra trình duyệt/hệ điều hành (app không có liên kết nào cần mở);
+// - không điều hướng khỏi trang của app; không cho gắn <webview>.
+app.on("web-contents-created", (_e, contents) => {
+  contents.setWindowOpenHandler(() => ({ action: "deny" }));
+  contents.on("will-navigate", (e) => e.preventDefault());
+  contents.on("will-redirect", (e) => e.preventDefault());
+  contents.on("will-attach-webview", (e) => e.preventDefault());
+});
 function openLogin(message) {
   if (loginWin && !loginWin.isDestroyed()) { loginWin.focus(); return; }
-  loginWin = new BrowserWindow({ width: 380, height: 600, resizable: false, title: "Zahu!Messenger — Đăng nhập", backgroundColor: "#4b1c7d", webPreferences });
+  loginWin = new BrowserWindow({ icon: ICON, width: 380, height: 600, resizable: false, title: "Zahu!Messenger — Đăng nhập", backgroundColor: "#4b1c7d", webPreferences });
   lockDown(loginWin);
   loginWin.loadFile(join(RENDERER, "login.html"), { query: message ? { message } : {} });
   loginWin.on("closed", () => { loginWin = null; });
 }
 function openContacts() {
   if (contactsWin && !contactsWin.isDestroyed()) { contactsWin.show(); contactsWin.focus(); return; }
-  contactsWin = new BrowserWindow({ width: 310, height: 640, minWidth: 260, minHeight: 420, title: "Zahu!Messenger", backgroundColor: "#4b1c7d", webPreferences });
+  contactsWin = new BrowserWindow({ icon: ICON, width: 310, height: 640, minWidth: 260, minHeight: 420, title: "Zahu!Messenger", backgroundColor: "#4b1c7d", webPreferences });
   lockDown(contactsWin);
   contactsWin.loadFile(join(RENDERER, "contacts.html"));
   contactsWin.on("closed", () => { contactsWin = null; if (core?.token) app.quit(); });
 }
-function openChat(userId, { inactive = false } = {}) {
+/**
+ * Mở cửa sổ chat. popup=true: do tin nhắn/Buzz đến → hiện NỔI LÊN TRÊN nhưng không lấy focus bàn phím
+ * (tránh người dùng đang gõ ở ứng dụng khác bị gõ nhầm vào khung chat), nhấp nháy taskbar.
+ * buzz: hiệu ứng Buzz cần áp dụng ngay khi cửa sổ vừa hiện (rung/nhấp nháy, dòng BUZZ!!!, âm thanh).
+ */
+function openChat(userId, { popup = false, buzz = null } = {}) {
   let win = chatWins.get(userId);
-  if (win && !win.isDestroyed()) { if (win.isMinimized()) win.restore(); if (!inactive) win.focus(); return win; }
+  if (win && !win.isDestroyed()) { if (win.isMinimized()) win.restore(); if (!popup) win.focus(); return win; }
   const c = core.contactById(userId);
-  win = new BrowserWindow({ width: 500, height: 480, minWidth: 360, minHeight: 320, title: c ? `${c.nick} — Chat` : "Chat", backgroundColor: "#f4effa", show: false, webPreferences });
+  win = new BrowserWindow({ icon: ICON, width: 500, height: 480, minWidth: 360, minHeight: 320, title: c ? `${c.nick} — Chat` : "Chat", backgroundColor: "#f4effa", show: false, webPreferences });
   lockDown(win);
-  win.loadFile(join(RENDERER, "chat.html"), { query: { userId } });
-  win.once("ready-to-show", () => (inactive ? win.showInactive() : win.show()));
+  win.ycUserId = userId;
+  const query = { userId };
+  if (buzz) Object.assign(query, { buzz: "1", sound: buzz.sound ? "1" : "0", flash: buzz.flash ? "1" : "0" });
+  win.loadFile(join(RENDERER, "chat.html"), { query });
+  win.once("ready-to-show", () => {
+    if (!popup) { win.show(); return; }
+    win.setAlwaysOnTop(true);
+    win.showInactive();
+    win.flashFrame(true);
+    setTimeout(() => { if (!win.isDestroyed()) win.setAlwaysOnTop(false); }, 400);
+    if (buzz?.shake) setTimeout(() => { if (!win.isDestroyed()) shake(win); }, 150);
+  });
   win.on("closed", () => chatWins.delete(userId));
   chatWins.set(userId, win);
   return win;
@@ -94,7 +120,7 @@ function shake(win) {
   let i = 0;
   const step = () => {
     if (win.isDestroyed()) return;
-    if (i >= offsets.length) { win.setPosition(x, y); shaking.delete(win); win.webContents.send("core-event", "shaken", {}); return; }
+    if (i >= offsets.length) { win.setPosition(x, y); shaking.delete(win); broadcast("shaken", { userId: win.ycUserId }); return; }
     win.setPosition(x + offsets[i][0], y + offsets[i][1]); i++;
     setTimeout(step, 35);
   };
@@ -108,6 +134,12 @@ function onBuzz(b) {
     window: live ? { visible: live.isVisible(), minimized: live.isMinimized() } : null, settings,
   });
   if (!eff.accept) return; // quá hạn: không xếp hàng, không phát lại
+  if (eff.open) {
+    // Chưa mở cửa sổ chat: bật cửa sổ lên và rung ngay (kiểu ứng dụng chat cổ điển).
+    openChat(b.fromUserId, { popup: true, buzz: eff });
+    broadcast("buzz-log", { fromUserId: b.fromUserId, effect: eff });
+    return;
+  }
   const nick = core.contactById(b.fromUserId)?.nick ?? "Một người bạn";
   live?.webContents.send("core-event", "buzz-received", { fromUserId: b.fromUserId, sound: eff.sound, effect: eff });
   if (eff.shake) shake(live);
@@ -122,6 +154,18 @@ function onBuzz(b) {
     if (!live && eff.sound) contactsWin?.webContents.send("core-event", "play-buzz", {});
   }
   broadcast("buzz-log", { fromUserId: b.fromUserId, effect: eff }); // cho test/quan sát
+}
+
+// Tin nhắn đến trực tiếp: chưa mở cửa sổ chat thì tự bật lên; đang mở nhưng không focus/thu nhỏ thì nhấp nháy taskbar.
+function onIncomingMessage({ peer }) {
+  const win = chatWins.get(peer);
+  const live = win && !win.isDestroyed() ? win : null;
+  const eff = decideIncomingMessage({
+    window: live ? { visible: live.isVisible(), minimized: live.isMinimized(), focused: live.isFocused() } : null, settings,
+  });
+  if (eff.open) openChat(peer, { popup: true });
+  else if (eff.flash) live.flashFrame(true);
+  broadcast("incoming-log", { peer, effect: eff }); // cho test/quan sát
 }
 
 // ---------------------------------------------------------------- IPC
@@ -147,7 +191,7 @@ ipcMain.handle("app", wrap(async (action, args) => {
       me: core?.me ?? null, mode: core?.mode ?? "online", statusText: core?.statusText ?? "", online: !!core?.online,
       settings: { ...settings },
     };
-    case "settings": settings = { ...settings, ...pick(args[0], ["reduceMotion", "buzzVibrate", "buzzSound", "rememberMe", "apiBase"]) }; saveSettings(); broadcast("settings", settings); return settings;
+    case "settings": settings = { ...settings, ...pick(args[0], ["reduceMotion", "buzzVibrate", "buzzSound", "autoOpenChat", "rememberMe", "apiBase"]) }; saveSettings(); broadcast("settings", settings); return settings;
     case "login": {
       createCore();
       await core.login(args[0], args[1]);
@@ -175,18 +219,26 @@ async function afterLogin() {
   return core.me;
 }
 async function logout(message) {
-  const c = core; core = null;
+  const c = core;
+  c?.removeAllListeners();
+  createCore(); // lõi mới, sạch — màn hình đăng nhập/đăng ký/quên mật khẩu dùng ngay được
   clearSession();
+  // Mở cửa sổ đăng nhập TRƯỚC khi đóng các cửa sổ khác: nếu có lúc không còn cửa sổ nào,
+  // sự kiện window-all-closed sẽ thoát luôn ứng dụng thay vì quay về màn hình đăng nhập.
+  openLogin(message);
   for (const w of chatWins.values()) if (!w.isDestroyed()) w.destroy();
   chatWins.clear();
   const cw = contactsWin; contactsWin = null;
   if (cw && !cw.isDestroyed()) cw.destroy();
-  openLogin(message);
   await c?.logout();
 }
 
 // ---------------------------------------------------------------- Khởi động
 app.whenReady().then(async () => {
+  // Từ chối mọi yêu cầu quyền từ trang (camera, micro, vị trí, clipboard, thông báo web…).
+  // Thông báo Buzz do main process tạo bằng Electron Notification nên không bị ảnh hưởng.
+  session.defaultSession.setPermissionRequestHandler((_wc, _perm, cb) => cb(false));
+  session.defaultSession.setPermissionCheckHandler(() => false);
   loadSettings();
   createCore();
   const token = loadSession();

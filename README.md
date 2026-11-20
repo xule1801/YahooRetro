@@ -11,7 +11,7 @@
 - Trạng thái Online / Bận / Vắng mặt / **Ẩn** (bạn bè thấy Offline; kiểm soát ở phía server), kèm dòng trạng thái.
 - Chat 1-1, lưu tin khi người nhận offline, xác nhận "đã gửi/đã chuyển", gửi lại không tạo bản trùng.
 - **Tin tự xóa sau 30 ngày** kể từ khi server nhận (kể cả tin chưa đọc). Backup mã hóa, giữ tối đa 7 ngày.
-- **BUZZ!**: rung cửa sổ người nhận nếu cửa sổ đang hiển thị; chỉ thông báo nếu đang thu nhỏ; không xếp hàng; không Buzz được người Offline/Ẩn; giới hạn 1 lần/10 giây.
+- **Tin nhắn hoặc BUZZ! đến khi chưa mở cửa sổ chat → cửa sổ chat tự bật lên** (Buzz thì bật lên và rung), nổi trên cùng nhưng không chiếm bàn phím. Cửa sổ đang mở thì rung khi Buzz; đang thu nhỏ thì chỉ thông báo; không xếp hàng; không Buzz được người Offline/Ẩn; giới hạn 1 lần/10 giây.
 - 12 smiley vàng động tự vẽ, có chế độ giảm chuyển động.
 
 Ngoài phạm vi MVP: chat nhóm, gọi thoại/video, gửi tệp/ảnh, Audibles, macOS/mobile, đăng nhập Facebook/Zalo.
@@ -35,7 +35,11 @@ Bản cài Windows: `npm run client:dist` → `apps/windows/dist/ZahuMessenger S
 
 ## Kiểm thử
 
+Test chạy trên **bộ máy chủ riêng** (`infra/.env.test`, compose project `yahoochat-test`, cổng 5434/5232/5233/1035/8035) vì test xóa dữ liệu. Test **từ chối chạy** nếu trỏ vào môi trường dùng thử.
+
 ```bash
+cp infra/.env.test.example infra/.env.test   # thay change-me
+npm run test:infra:up                      # một lần
 npm test                                   # contracts + API (gồm tích hợp với Prosody/PostgreSQL thật) + lõi client
 npm run test:e2e -w apps/windows           # hai client đi trọn luồng trên stack thật
 npm run test:ui  -w apps/windows           # điều khiển ứng dụng Electron thật

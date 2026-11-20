@@ -30,22 +30,32 @@ export function presenceForMode(mode) {
 export const PRESENCE_LABEL = { online: "Online", busy: "Bận", away: "Vắng mặt", invisible: "Ẩn", offline: "Offline" };
 
 /**
- * Quyết định hiệu ứng khi nhận Buzz. Thiết kế §3.5:
- * - Buzz quá hạn: bỏ qua hoàn toàn (không xếp hàng, không phát lại).
- * - Cửa sổ chat đang hiển thị (không thu nhỏ): rung một lần (trừ khi giảm chuyển động/tắt rung).
- * - Thu nhỏ hoặc chưa mở: chỉ thông báo; KHÔNG ghi nhớ để rung sau khi mở lại.
+ * Quyết định hiệu ứng khi nhận Buzz.
+ * - Buzz quá hạn: bỏ qua hoàn toàn (không xếp hàng, không phát lại) — thiết kế §3.5.
+ * - Cửa sổ chat đang hiển thị: rung một lần (trừ khi giảm chuyển động/tắt rung → nhấp nháy).
+ * - CHƯA mở cửa sổ chat: tự mở cửa sổ và rung, như ứng dụng chat cổ điển (yêu cầu chủ dự án 2026-11-20).
+ *   Tắt tùy chọn autoOpenChat → chỉ thông báo.
+ * - Cửa sổ đang thu nhỏ: chỉ thông báo, không bung ra, không ghi nhớ để rung sau — thiết kế §3.5.
  */
 export function decideBuzzEffect({ nowMs, expiresAtMs, window, settings }) {
-  if (!(nowMs < expiresAtMs)) return { accept: false, shake: false, notify: false, sound: false };
-  const visible = !!window && window.visible && !window.minimized;
+  if (!(nowMs < expiresAtMs)) return { accept: false, open: false, shake: false, notify: false, sound: false };
+  const open = !window && settings.autoOpenChat !== false;
+  const visible = open || (!!window && window.visible && !window.minimized);
   const shake = visible && settings.buzzVibrate && !settings.reduceMotion;
   return {
     accept: true,
+    open,
     shake,
     notify: !visible,
     sound: settings.buzzSound,
-    flash: visible && !shake, // giảm chuyển động: nhấp nháy khung thay cho rung
+    flash: visible && !shake, // giảm chuyển động/tắt rung: nhấp nháy khung thay cho rung
   };
+}
+
+/** Tin nhắn đến trực tiếp: chưa mở cửa sổ chat → tự mở; có cửa sổ nhưng không focus/thu nhỏ → nhấp nháy taskbar. */
+export function decideIncomingMessage({ window, settings }) {
+  if (!window) return { open: settings.autoOpenChat !== false, flash: false };
+  return { open: false, flash: window.minimized || !window.focused };
 }
 
 /** Kho tin nhắn theo từng người bạn: chống trùng theo originId/stanzaId, sắp xếp theo giờ server, tự xóa khi hết hạn. */
@@ -94,13 +104,13 @@ function byServerTs(a, b) {
 }
 const rank = (s) => ({ sending: 0, failed: 0, stored: 1, delivered: 2 })[s] ?? 0;
 
-const SAVED_KEYS = ["apiBase", "reduceMotion", "buzzVibrate", "buzzSound", "rememberMe", "lastIdentifier"];
+const SAVED_KEYS = ["apiBase", "reduceMotion", "buzzVibrate", "buzzSound", "autoOpenChat", "rememberMe", "lastIdentifier"];
 /**
  * Gộp cài đặt đã lưu với biến môi trường. `insecureTls` (bỏ kiểm tra chứng chỉ — chỉ cho máy thử nghiệm)
  * CHỈ lấy từ biến môi trường của lần chạy hiện tại, không bao giờ đọc/ghi tệp cài đặt.
  */
 export function mergeSettings(saved, env, defaults = {}) {
-  const s = { apiBase: "http://127.0.0.1:8080", reduceMotion: false, buzzVibrate: true, buzzSound: true, rememberMe: true, lastIdentifier: "", ...defaults };
+  const s = { apiBase: "http://127.0.0.1:8080", reduceMotion: false, buzzVibrate: true, buzzSound: true, autoOpenChat: true, rememberMe: true, lastIdentifier: "", ...defaults };
   for (const k of SAVED_KEYS) if (saved && k in saved) s[k] = saved[k];
   if (env.YC_API_BASE) s.apiBase = env.YC_API_BASE;
   s.insecureTls = env.YC_DEV_INSECURE_TLS === "1";
@@ -113,9 +123,13 @@ mergeSettings.persistable = (s) => Object.fromEntries(SAVED_KEYS.filter((k) => k
  * STARTTLS (xmpp://) có thể bị kẻ tấn công ở giữa gỡ bỏ khiến token gửi dạng rõ. Chế độ dev được phép bỏ qua.
  */
 export function assertSecureEndpoint(url, insecureDev) {
-  if (insecureDev) return;
   const u = new URL(url);
   const local = ["127.0.0.1", "localhost", "[::1]"].includes(u.hostname);
+  if (insecureDev) {
+    // Chế độ dev/dùng thử tắt kiểm tra chứng chỉ → chỉ an toàn khi máy chủ nằm ngay trên máy này (không qua mạng).
+    if (!local) throw new Error(`Chế độ bỏ kiểm tra chứng chỉ (YC_DEV_INSECURE_TLS) chỉ dùng cho máy chủ trên chính máy này, không dùng với ${u.host}.`);
+    return;
+  }
   if (u.protocol === "https:" || u.protocol === "xmpps:" || u.protocol === "wss:") return;
   if (u.protocol === "http:" && local) return;
   throw new Error(`Từ chối kết nối không mã hóa tới ${u.protocol}//${u.host}. Máy chủ phải dùng https:// và xmpps://.`);

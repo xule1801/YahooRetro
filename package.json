@@ -16,7 +16,9 @@
     "typecheck": "npm run typecheck -w services/api",
     "client": "npm start -w apps/windows",
     "client:dist": "npm run dist -w apps/windows",
-    "load": "node tests/load/load.mjs"
+    "load": "node tests/load/load.mjs",
+    "test:infra:up": "docker compose -p yahoochat-test -f infra/docker-compose.yml --env-file infra/.env.test up -d",
+    "test:infra:down": "docker compose -p yahoochat-test -f infra/docker-compose.yml --env-file infra/.env.test down"
   },
   "engines": {
     "node": ">=24"

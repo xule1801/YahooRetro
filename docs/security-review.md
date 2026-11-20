@@ -34,3 +34,29 @@ Ngày 2026-11-19. Người viết mã cũng là người rà soát, nên dễ c�
 | Bản cài chưa ký số (code signing) | Trung bình | Windows SmartScreen sẽ cảnh báo. Cần chứng chỉ ký mã (tốn phí, chưa được duyệt) |
 | Prosody 13.0 dùng image nightly | Trung bình | Phải ghim một bản phát hành 13.0.x theo digest trước khi lên môi trường thật |
 | Tài khoản bị khóa vẫn có thể nằm trong roster của người khác | Thấp | Họ thấy tài khoản đó offline. Tài khoản bị khóa không xin được token XMPP mới (vẫn còn token hợp lệ tối đa 5 phút, nhưng phiên đã bị ngắt) |
+
+## Rà soát 2026-11-20: kẻ gian có lợi dụng app để xâm nhập máy tính được không?
+
+Phương pháp: rà mã tĩnh theo danh sách kiểm tra bảo mật chính thức của Electron, cộng các **bài test tấn công chạy trên app thật**: `apps/windows/test/security.e2e.test.js` (bản dev) và `apps/windows/test/fuses.test.js` (exe đã đóng gói). Công cụ quét bên ngoài (Electronegativity) **không chạy được** vì môi trường của agent chặn tải công cụ bên thứ ba.
+
+| # | Đường tấn công | Trước khi sửa | Sau khi sửa | Bằng chứng |
+|---|---|---|---|---|
+| 1 | Bạn bè độc hại gửi tin nhắn/dòng trạng thái chứa HTML/JS (`<img onerror>`, `<script>`, `<svg onload>`, `<iframe javascript:>`, `<a href=javascript:>`, ký tự đảo chiều RTL) | **An toàn**: chỉ hiện dạng chữ, không thực thi | — | security.e2e #1 |
+| 2 | Mã trong cửa sổ truy cập Node/hệ điều hành (`require`, `process`) | **An toàn**: sandbox + contextIsolation, preload chỉ mở `call/app/on` | — | security.e2e #2 |
+| 3 | Gọi lệnh nội bộ qua IPC ngoài danh sách cho phép | **An toàn**: whitelist | — | security.e2e #3 |
+| 4 | `window.open("https://…/mã-độc.exe")` → mở trình duyệt hệ thống | **Lỗ hổng**: app chuyển URL cho `shell.openExternal` | Chặn mọi cửa sổ mới, điều hướng, redirect và `<webview>` cho **mọi** webContents; bỏ hẳn `openExternal` | security.e2e #4 |
+| 5 | Trang xin quyền camera/micro/vị trí/clipboard/thông báo | **Lỗ hổng**: Electron mặc định tự đồng ý | Từ chối mọi yêu cầu quyền (`setPermissionRequestHandler`/`CheckHandler`) | security.e2e #5 |
+| 6 | Dùng `ZahuMessenger.exe` làm trình chạy JavaScript tùy ý (`ELECTRON_RUN_AS_NODE=1`, kỹ thuật "LOLBin") | **Lỗ hổng, đã tái hiện thật** | Fuse: tắt `RunAsNode`, `NODE_OPTIONS`, tham số `--inspect` | fuses #1, #2 |
+| 7 | Nạp mã độc qua `NODE_OPTIONS=--require` | An toàn (Electron đã chặn sẵn) | Fuse tắt hẳn | fuses #3 |
+| 8 | Sửa lén mã của app trong `app.asar` (cấy mã độc vào app đã cài) | Không phát hiện được | Fuse: chỉ nạp từ asar + **kiểm tra toàn vẹn**: app bị sửa 1 byte sẽ từ chối chạy | fuses #5 |
+| 9 | Lối tắt dùng thử (bỏ kiểm tra chứng chỉ) bị trỏ sang máy chủ thật → có thể bị giả mạo máy chủ | Lỗ hổng cấu hình | Chế độ này **chỉ** chấp nhận máy chủ ở 127.0.0.1/localhost | core.test |
+| 10 | Truy cập dịch vụ của hệ thống từ máy khác trong mạng LAN | **An toàn**: mọi cổng (API, Prosody, PostgreSQL, Mailpit) chỉ nghe `127.0.0.1` | — | `netstat` |
+| 11 | Lỗ hổng đã biết trong thư viện | `npm audit --omit=dev`: 0 | — | — |
+
+**Rủi ro còn lại / khuyến nghị**
+- **Bản cài chưa ký số:** kẻ gian có thể phát tán một bản cài giả mạo trông giống hệt. Nên mua chứng chỉ ký mã. Trước mắt, chỉ phát bản cài qua kênh tin cậy và kèm mã SHA-256 để đối chiếu.
+- **Chưa có tự động cập nhật:** bản vá bảo mật của Electron/Chromium chỉ tới máy người dùng khi họ cài lại. Electron 43 sẽ hết được hỗ trợ khi có bản 46 → cần lịch nâng cấp.
+- **Trang trong app được nạp qua `file://`.** Đây là cách được phép, nhưng dùng giao thức riêng (`app://`) sẽ chặt hơn nữa. Chưa làm.
+- **Chỉ ở môi trường dùng thử:** một website độc hại mở trong trình duyệt trên *cùng máy* về lý thuyết có thể gửi yêu cầu tới `127.0.0.1:8090`/`8025` (DNS rebinding). API không dùng cookie nên không mạo danh được người dùng, nhưng giao diện Mailpit (chứa OTP thử nghiệm) không có mật khẩu. Không áp dụng cho môi trường thật (không có Mailpit).
+- Từ khi tắt cờ `--inspect`, test giao diện tự động (Playwright) **chỉ chạy trên bản dev**. Bản exe được kiểm bằng `npm run test:exe -w apps/windows` (fuse, chặn LOLBin, chống sửa mã, khởi động bình thường).
+- Đây vẫn là **tự rà soát**, chưa phải kiểm toán độc lập.

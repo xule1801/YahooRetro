@@ -69,3 +69,18 @@ Mọi số liệu dưới đây là **kết quả của lần chạy cuối, sau
 - Nhiều phiên cùng một tài khoản: chưa có test riêng (xem mục 2).
 - Thử tải trên cloud thật, chứng chỉ TLS thật, SMTP/SMS thật: chưa làm (chưa được phép chi tiền hay triển khai).
 - Chưa có rà soát bảo mật **độc lập**. Chỉ có tự rà soát của agent ([security-review.md](../security-review.md)).
+
+## Cập nhật 2026-11-20
+
+Thay đổi: cửa sổ chat tự bật khi có tin/Buzz; 54 smiley; logo; gia cố bảo mật Electron; **test chạy trên bộ máy chủ riêng** (`npm run test:infra:up`, `infra/.env.test`) và từ chối chạy nếu trỏ vào môi trường dùng thử.
+
+| Bộ test | Lệnh | Kết quả lần chạy cuối |
+|---|---|---|
+| Contracts (54 smiley, tách mã, ranh giới chữ) | `npm test -w packages/contracts` | 5/5 |
+| API (unit + tích hợp Prosody/PostgreSQL + backup) | `npm test -w services/api` | 42/42 |
+| Lõi client + hình smiley | `npm test -w apps/windows` | 23/23 |
+| E2E hai client | `npm run test:e2e -w apps/windows` | 11/11 |
+| Giao diện + ghi nhớ đăng nhập + **tấn công** (XSS, cô lập, IPC, liên kết ngoài, quyền) | `npm run test:ui -w apps/windows` | 19/19 (bản dev) |
+| Gia cố exe (fuse, chặn ELECTRON_RUN_AS_NODE/NODE_OPTIONS, chống sửa app.asar, vẫn khởi động) | `YC_UI_EXE=<đường dẫn Windows tới exe> npm run test:exe -w apps/windows` | 5/5 (cả `dist/` lẫn bản đã cài) |
+
+Lưu ý: từ khi tắt cờ `--inspect` trong exe, Playwright không điều khiển được bản đóng gói nữa; test giao diện chạy trên bản dev (cùng mã), bản exe được kiểm bằng `test:exe`.

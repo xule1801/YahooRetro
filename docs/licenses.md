@@ -15,7 +15,8 @@ Không dùng thành phần GPL/AGPL nào trong những gì được phân phối
 
 ## Tài sản giao diện
 
-- **12 smiley** (`apps/windows/renderer/smileys.js`): do agent vẽ mới hoàn toàn bằng SVG và CSS cho dự án này. Không sao chép hay đồ lại từ bộ smiley của Yahoo hoặc bên thứ ba nào. Mã của smiley ổn định (`:)`, `:(`, `;)`, `:D`, `:P`, `:O`, `:X`, `B-)`, `:-*`, `>:(`, `:((`, `=))`); các mã dạng text kiểu này là quy ước phổ biến.
+- **54 smiley** (`apps/windows/renderer/smileys.js`): do agent vẽ mới bằng SVG/CSS cho dự án này, dựng từ thư viện bộ phận riêng (mắt, miệng, phụ kiện). Không sao chép hay đồ lại hình smiley của Yahoo hoặc bên thứ ba. Chỉ **mã gõ tắt và ý nghĩa** (`:)`, `>:D<`, `=D>`, `<):)`…) theo quy ước phổ biến của các ứng dụng chat cổ điển, do chủ dự án cung cấp bảng tham chiếu ngày 2026-11-20. Mã cũ `:X`, `:O`, `>:(` vẫn được nhận.
+- **Logo Zahu!Messenger** (`apps/windows/renderer/logo.svg`, icon `apps/windows/assets/icon.png` được kết xuất bằng `npm run icon -w apps/windows`): do agent thiết kế ngày 2026-11-20. Chủ dự án yêu cầu "phong cách tựa Yahoo"; agent giữ tinh thần (bong bóng chat tím bóng, mặt cười vàng) nhưng **cố ý không sao chép bố cục logo Yahoo**: không có chữ cái trong bong bóng, không có thanh "!" dựng đứng riêng, mặt cười nằm **bên trong** bong bóng chứ không đè góc, có thêm ngôi sao lấp lánh. Logo kết hợp với tên "Zahu!Messenger" vẫn gợi liên tưởng tới Yahoo! Messenger → nằm trong phạm vi đánh giá rủi ro nhãn hiệu ở mục "Tên sản phẩm".
 - **Âm Buzz:** tổng hợp bằng WebAudio ngay lúc chạy, không dùng tệp âm thanh nào.
 - **Màu tím, bố cục danh bạ/cửa sổ chat:** lấy cảm hứng từ phong cách ứng dụng chat cổ điển. Không dùng logo, biểu tượng, phông chữ độc quyền hay ảnh chụp màn hình của Yahoo.
 - **Ảnh tham chiếu của người dùng:** không có trong repo và không được dùng làm tài sản phát hành.

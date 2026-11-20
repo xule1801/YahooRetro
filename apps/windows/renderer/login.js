@@ -1,7 +1,5 @@
 import { yc, $, errText, applySettings } from "./common.js";
-import { smileySvg } from "./smileys.js";
 
-$("#logo").innerHTML = smileySvg("grin", "Zahu!Messenger").replace('width="22" height="22"', 'width="64" height="64"');
 const params = new URLSearchParams(location.search);
 const st = await applySettings();
 $("#li-id").value = st.settings.lastIdentifier ?? "";

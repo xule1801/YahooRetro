@@ -15,7 +15,7 @@ export declare const PresenceMode: Readonly<{ ONLINE: "online"; BUSY: "busy"; AW
 export type PresenceModeT = "online" | "busy" | "away" | "invisible";
 export declare const Xmlns: Readonly<Record<"APPSVC" | "EVENT" | "ACK" | "BUZZ" | "ATTENTION" | "MAM" | "SID" | "RECEIPTS" | "SMILEY", string>>;
 export declare const EventType: Readonly<Record<"FRIEND_REQUEST" | "FRIEND_ACCEPTED" | "FRIEND_REMOVED" | "CONTACTS_CHANGED" | "NICK_CHANGED" | "SESSION_REVOKED", string>>;
-export declare const Smileys: ReadonlyArray<{ code: string; id: string; label: string }>;
+export declare const Smileys: ReadonlyArray<{ code: string; id: string; label: string; aliases?: readonly string[] }>;
 export declare function tokenizeSmileys(text: string): Array<{ type: "text"; text: string } | { type: "smiley"; id: string; code: string }>;
 export declare function normalizeNick(nick: string): string;
 export declare function userLocalpart(userId: string): string;

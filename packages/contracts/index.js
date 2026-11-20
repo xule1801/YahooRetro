@@ -63,29 +63,81 @@ export const EventType = Object.freeze({
   SESSION_REVOKED: "session.revoked",
 });
 
-/** 12 smiley gốc của dự án (tự vẽ, xem apps/windows/assets/smileys/LICENSE.md). Mã ổn định, không đổi. */
+/**
+ * 54 smiley — mã gõ tắt theo quy ước phổ biến của ứng dụng chat cổ điển; HÌNH VẼ là của dự án
+ * (apps/windows/renderer/smileys.js, vẽ mới bằng SVG). `aliases`: mã cũ vẫn được nhận để tin cũ hiển thị đúng.
+ * Mã và id ổn định — không đổi sau khi phát hành.
+ */
 export const Smileys = Object.freeze([
-  { code: ":)", id: "smile", label: "Cười" },
+  { code: ":)", id: "happy", label: "Vui" },
   { code: ":(", id: "sad", label: "Buồn" },
   { code: ";)", id: "wink", label: "Nháy mắt" },
-  { code: ":D", id: "grin", label: "Cười lớn" },
-  { code: ":P", id: "tongue", label: "Lè lưỡi" },
-  { code: ":O", id: "surprise", label: "Ngạc nhiên" },
-  { code: ":X", id: "love", label: "Yêu" },
-  { code: "B-)", id: "cool", label: "Ngầu" },
+  { code: ":D", id: "grin", label: "Cười toe" },
+  { code: ";;)", id: "lashes", label: "Chớp mắt điệu đà" },
+  { code: ">:D<", id: "hug", label: "Ôm chặt" },
+  { code: ":-/", id: "confused", label: "Bối rối" },
+  { code: ":x", id: "love", label: "Mê mẩn", aliases: [":X"] },
+  { code: ':">', id: "blush", label: "Ngượng ngùng" },
+  { code: ":P", id: "tongue", label: "Lè lưỡi", aliases: [":p"] },
   { code: ":-*", id: "kiss", label: "Hôn" },
-  { code: ">:(", id: "angry", label: "Giận" },
+  { code: "=((", id: "heartbreak", label: "Tan nát cõi lòng" },
+  { code: ":-O", id: "surprise", label: "Ngạc nhiên", aliases: [":O"] },
+  { code: "X(", id: "angry", label: "Giận", aliases: [">:("] },
+  { code: ":>", id: "smug", label: "Tự mãn" },
+  { code: "B-)", id: "cool", label: "Ngầu" },
+  { code: ":-S", id: "worried", label: "Lo lắng" },
+  { code: "#:-S", id: "whew", label: "Phù, thoát rồi!" },
+  { code: ">:)", id: "devil", label: "Quỷ sứ" },
   { code: ":((", id: "cry", label: "Khóc" },
-  { code: "=))", id: "laugh", label: "Cười lăn" },
+  { code: ":))", id: "laugh", label: "Cười lớn" },
+  { code: ":|", id: "straight", label: "Mặt lạnh" },
+  { code: "/:)", id: "eyebrow", label: "Nhướng mày" },
+  { code: "=))", id: "rofl", label: "Cười lăn lộn" },
+  { code: "O:-)", id: "angel", label: "Thiên thần" },
+  { code: ":-B", id: "nerd", label: "Mọt sách" },
+  { code: "=;", id: "talkhand", label: "Nói với bàn tay" },
+  { code: ":-c", id: "callme", label: "Gọi cho tớ" },
+  { code: ":)]", id: "phone", label: "Đang nghe điện thoại" },
+  { code: "~X(", id: "witsend", label: "Hết chịu nổi" },
+  { code: ":-h", id: "wave", label: "Vẫy tay" },
+  { code: ":-t", id: "timeout", label: "Tạm dừng" },
+  { code: "8->", id: "daydream", label: "Mơ mộng" },
+  { code: "I-)", id: "sleepy", label: "Buồn ngủ" },
+  { code: "8-|", id: "rolleyes", label: "Đảo mắt" },
+  { code: "L-)", id: "loser", label: "Thua rồi" },
+  { code: ":-&", id: "sick", label: "Ốm" },
+  { code: ":-$", id: "secret", label: "Đừng nói với ai" },
+  { code: "[-(", id: "silent", label: "Không thèm nói" },
+  { code: ":O)", id: "clown", label: "Chú hề" },
+  { code: "8-}", id: "silly", label: "Ngớ ngẩn" },
+  { code: "<:-P", id: "party", label: "Tiệc tùng" },
+  { code: "(:|", id: "yawn", label: "Ngáp" },
+  { code: "=P~", id: "drool", label: "Thèm chảy nước miếng" },
+  { code: ":-?", id: "thinking", label: "Suy nghĩ" },
+  { code: "#-o", id: "doh", label: "Ôi trời ơi!" },
+  { code: "=D>", id: "applause", label: "Vỗ tay" },
+  { code: ":-SS", id: "nailbite", label: "Cắn móng tay" },
+  { code: "@-)", id: "hypno", label: "Bị thôi miên" },
+  { code: ":^o", id: "liar", label: "Nói dối" },
+  { code: ":-w", id: "waiting", label: "Chờ mãi" },
+  { code: ":-<", id: "sigh", label: "Thở dài" },
+  { code: ">:P", id: "phbbt", label: "Lêu lêu" },
+  { code: "<):)", id: "cowboy", label: "Cao bồi" },
 ]);
 
-/** Tách văn bản thành các phần text/smiley. Ưu tiên mã dài nhất. Thuần, không phụ thuộc DOM. */
+const SMILEY_CODES = Smileys.flatMap((s) => [s.code, ...(s.aliases ?? [])].map((code) => ({ code, id: s.id })))
+  .sort((a, b) => b.code.length - a.code.length);
+const isWordChar = (ch) => !!ch && /[\p{L}\p{N}]/u.test(ch);
+
+/**
+ * Tách văn bản thành các phần text/smiley. Ưu tiên mã dài nhất. Mã bắt đầu bằng chữ/số (X(, I-), 8->, L-), B-))
+ * không được nhận khi dính liền sau một chữ/số (tránh "MAX(" hay "HI-)" thành smiley). Thuần, không phụ thuộc DOM.
+ */
 export function tokenizeSmileys(text) {
-  const codes = [...Smileys].sort((a, b) => b.code.length - a.code.length);
   const out = [];
   let buf = "";
   for (let i = 0; i < text.length; ) {
-    const hit = codes.find((s) => text.startsWith(s.code, i));
+    const hit = SMILEY_CODES.find((s) => text.startsWith(s.code, i) && !(isWordChar(s.code[0]) && isWordChar(text[i - 1])));
     if (hit) {
       if (buf) { out.push({ type: "text", text: buf }); buf = ""; }
       out.push({ type: "smiley", id: hit.id, code: hit.code });

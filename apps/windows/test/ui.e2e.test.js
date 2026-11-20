@@ -27,6 +27,8 @@ async function newUser(core, nick) {
 }
 const windowByTitle = async (re) => waitFor(() => app.windows().find((w) => re.test(w.url())), 10000, "cửa sổ " + re);
 const buzzLog = (page) => page.evaluate(() => new Promise((r) => { const off = window.yc.on((n, p) => { if (n === "buzz-log") { off(); r(p.effect); } }); }));
+const incomingLog = (page) => page.evaluate(() => new Promise((r) => { const off = window.yc.on((n, p) => { if (n === "incoming-log") { off(); r(p.effect); } }); }));
+const chatWindowCount = () => app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().filter((w) => !w.isDestroyed() && !w.webContents.isDestroyed() && w.webContents.getURL().includes("chat.html")).length);
 const shaken = (page, ms) => page.evaluate((ms) => new Promise((r) => { const off = window.yc.on((n) => { if (n === "shaken") { off(); r(true); } }); setTimeout(() => { off(); r(false); }, ms); }), ms);
 
 before(async () => {
@@ -73,6 +75,24 @@ test("ứng dụng Windows: đăng nhập → danh bạ → chat → Buzz", asyn
     await contacts.screenshot({ path: join(SHOTS, "02-danh-ba.png") });
   });
 
+  await t.test("chưa mở cửa sổ chat, bạn nhắn tới → cửa sổ chat TỰ BẬT LÊN, nổi trên cùng, có tin nhắn", async () => {
+    assert.equal(await chatWindowCount(), 0);
+    const eff = incomingLog(contacts);
+    await B.sendMessage(aMe.userId, "Ê, có đó không?");
+    assert.deepEqual(await eff, { open: true, flash: false });
+    const popup = await windowByTitle(/chat\.html/);
+    await popup.locator(".msg.in", { hasText: "Ê, có đó không?" }).waitFor({ timeout: 5000 });
+    const shown = await app.evaluate(({ BrowserWindow }) => { const w = BrowserWindow.getAllWindows().find((x) => x.webContents.getURL().includes("chat.html")); return { visible: w.isVisible(), minimized: w.isMinimized() }; });
+    assert.deepEqual(shown, { visible: true, minimized: false });
+    await popup.screenshot({ path: join(SHOTS, "05-tu-bat-cua-so.png") });
+    // nhắn tiếp khi cửa sổ đã mở: không mở thêm cửa sổ thứ hai
+    await B.sendMessage(aMe.userId, "Tin thứ hai");
+    await popup.locator(".msg.in", { hasText: "Tin thứ hai" }).waitFor({ timeout: 5000 });
+    assert.equal(await chatWindowCount(), 1);
+    await popup.close();
+    await waitFor(async () => (await chatWindowCount()) === 0, 5000, "đóng cửa sổ chat");
+  });
+
   await t.test("mở chat bằng bàn phím (Tab/Enter)", async () => {
     await contacts.locator(`.contact[data-user="${B.me.userId}"]`).focus();
     await contacts.keyboard.press("Enter");
@@ -89,6 +109,14 @@ test("ứng dụng Windows: đăng nhập → danh bạ → chat → Buzz", asyn
     assert.equal(await chat.locator(".msg.out svg.smiley").count(), 2);
     await B.sendMessage(aMe.userId, "Nhớ mọi người quá :X ;)");
     await chat.locator(".msg.in svg.smiley").nth(1).waitFor({ timeout: 5000 });
+    // Logo trên thanh tiêu đề cửa sổ chat phải tải được (không bị CSP chặn)
+    assert.ok(await chat.locator(".chat-head img.logo-head").evaluate((i) => i.complete && i.naturalWidth > 0));
+    assert.ok(await contacts.locator(".titlebar img.logo-head").evaluate((i) => i.complete && i.naturalWidth > 0));
+    await chat.click("#btn-smiley");
+    assert.equal(await chat.locator("#picker .picker-item").count(), 54);
+    await chat.locator('#picker .picker-item[aria-label*="(>:D<)"]').click(); // chọn "Ôm chặt" từ bảng
+    assert.equal(await chat.inputValue("#input"), ">:D< ");
+    await chat.fill("#input", "");
     await chat.click("#btn-smiley");
     await chat.screenshot({ path: join(SHOTS, "03-chat-smiley.png") });
     await chat.keyboard.press("Escape");
@@ -115,6 +143,23 @@ test("ứng dụng Windows: đăng nhập → danh bạ → chat → Buzz", asyn
     const shook = shaken(chat, 2500);
     await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().find((w) => w.webContents.getURL().includes("chat.html")).restore());
     assert.equal(await shook, false);
+  });
+
+  await t.test("chưa mở cửa sổ chat, bạn Buzz → cửa sổ TỰ BẬT LÊN và RUNG, có dòng BUZZ!!!", async () => {
+    await chat.close();
+    await waitFor(async () => (await chatWindowCount()) === 0, 5000, "đóng cửa sổ chat");
+    await sleep(10_300); // giới hạn Buzz 10 giây/cặp
+    const effect = buzzLog(contacts);
+    const shook = shaken(contacts, 5000);
+    assert.deepEqual(await B.buzz(aMe.userId), { ok: true });
+    const e = await effect;
+    assert.equal(e.open, true);
+    assert.equal(e.shake, true);
+    assert.equal(e.notify, false);
+    assert.equal(await shook, true);
+    chat = await windowByTitle(/chat\.html/);
+    await chat.locator(".buzzline", { hasText: "BUZZ!!!" }).waitFor({ timeout: 5000 });
+    await chat.screenshot({ path: join(SHOTS, "06-buzz-tu-bat.png") });
   });
 
   await t.test("bật Giảm chuyển động: Buzz không rung (nhấp nháy thay thế), smiley tĩnh", async () => {

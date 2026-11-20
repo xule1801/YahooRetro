@@ -47,7 +47,9 @@ export function pruneBackups(dir: string, clock: Clock, days: number) {
 
 function compose(args: string[], input?: Buffer): Promise<Buffer> {
   return new Promise((res, rej) => {
-    const p = spawn("docker", ["compose", "-f", join(INFRA, "docker-compose.yml"), "--env-file", join(INFRA, ".env"), ...args],
+    const project = process.env.YC_COMPOSE_PROJECT ?? "yahoochat";
+    const envFile = process.env.YC_COMPOSE_ENV_FILE ?? ".env";
+    const p = spawn("docker", ["compose", "-p", project, "-f", join(INFRA, "docker-compose.yml"), "--env-file", join(INFRA, envFile), ...args],
       { stdio: ["pipe", "pipe", "pipe"] });
     const out: Buffer[] = [], err: Buffer[] = [];
     p.stdout.on("data", (d) => out.push(d));

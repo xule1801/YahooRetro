@@ -7,3 +7,4 @@ backups/
 .superpowers/
 /test-results/
 apps/windows/test-results/
+infra/.env.test

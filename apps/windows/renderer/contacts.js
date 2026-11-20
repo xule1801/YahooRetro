@@ -129,6 +129,7 @@ async function menuPanel() {
     el("label", { text: "Đổi nick (nick cũ được giữ 30 ngày)" }), el("div", { class: "row" }, nick,
       el("button", { class: "btn small", text: "Đổi", onclick: async () => { try { const r = await yc.call("changeNick", nick.value.trim()); $("#my-nick").textContent = r.nick; err.textContent = ""; } catch (e) { err.textContent = errText(e); } } })),
     el("label", { text: "Buzz và hiển thị" }),
+    cb("autoOpenChat", "Tự mở cửa sổ chat khi có tin nhắn hoặc Buzz"),
     cb("buzzVibrate", "Rung cửa sổ khi nhận Buzz"),
     cb("buzzSound", "Phát âm thanh khi nhận Buzz"),
     cb("reduceMotion", "Giảm chuyển động (smiley tĩnh, không rung)"),

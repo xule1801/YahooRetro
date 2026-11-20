@@ -1,7 +1,8 @@
 import { yc, $, el, errText, MODE_LABEL, applySettings, playBuzz } from "./common.js";
 import { renderRich, buildPicker } from "./smileys.js";
 
-const peer = new URLSearchParams(location.search).get("userId");
+const params = new URLSearchParams(location.search);
+const peer = params.get("userId");
 const st = await applySettings();
 const myNick = () => st.me?.nick ?? "Tôi";
 let contact = await yc.call("contactById", peer);
@@ -97,4 +98,10 @@ yc.on((name, p) => {
 lastView = await yc.call("contactsView");
 header();
 await loadHistory();
+// Cửa sổ được bật lên do nhận Buzz (main đã rung cửa sổ): hiện dòng BUZZ!!!, âm thanh, nhấp nháy nếu giảm chuyển động.
+if (params.get("buzz") === "1") {
+  sysline(`${contact?.nick ?? "Bạn"}: BUZZ!!!`, "buzzline");
+  if (params.get("sound") === "1") playBuzz();
+  if (params.get("flash") === "1") document.body.classList.add("flash");
+}
 $("#input").focus();

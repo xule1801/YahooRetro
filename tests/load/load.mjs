@@ -10,7 +10,9 @@ import pg from "pg";
 import { ChatCore } from "../../apps/windows/core/chat-core.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
-process.loadEnvFile(resolve(ROOT, "infra/.env"));
+// Thử tải tạo 100 tài khoản → chạy trên BỘ MÁY CHỦ TEST, không làm bẩn môi trường dùng thử.
+process.loadEnvFile(resolve(ROOT, "infra/.env.test"));
+if (process.env.YC_TEST_STACK !== "1") throw new Error("Từ chối chạy thử tải: không phải bộ máy chủ test");
 const N_USERS = Number(process.env.LOAD_USERS ?? 100);
 const N_CONN = Number(process.env.LOAD_CONNECTIONS ?? 30);
 const MSGS_PER_CONN = Number(process.env.LOAD_MSGS ?? 20);
@@ -32,7 +34,7 @@ const owner = new pg.Client({ connectionString: `postgres://yc_owner:${encodeURI
 await owner.connect();
 
 // ---- 2 bản API dùng chung DB/Prosody ----
-const apis = PORTS.map((port) => spawn(process.execPath, ["--env-file=../../infra/.env", "src/server.ts"], {
+const apis = PORTS.map((port) => spawn(process.execPath, ["--env-file=../../infra/.env.test", "src/server.ts"], {
   cwd: resolve(ROOT, "services/api"), env: { ...process.env, YC_API_PORT: String(port), YC_LOG_LEVEL: "warn" }, stdio: ["ignore", "ignore", "inherit"],
 }));
 const bases = PORTS.map((p) => `http://127.0.0.1:${p}`);
@@ -43,7 +45,7 @@ const errors = [];
 
 try {
   // ---- 1. Đăng ký 100 tài khoản (SMS giả lập) ----
-  const inv = JSON.parse(execFileSync(process.execPath, ["--env-file=../../infra/.env", "src/cli.ts", "invite", "create", "--uses", String(N_USERS), "--days", "1", "--note", "load test"], { cwd: resolve(ROOT, "services/api"), encoding: "utf8" }).replace(/^[^{]*/, ""));
+  const inv = JSON.parse(execFileSync(process.execPath, ["--env-file=../../infra/.env.test", "src/cli.ts", "invite", "create", "--uses", String(N_USERS), "--days", "1", "--note", "load test"], { cwd: resolve(ROOT, "services/api"), encoding: "utf8" }).replace(/^[^{]*/, ""));
   const regLat = [];
   const cores = await pool([...Array(N_USERS).keys()], 10, async (i) => {
     const c = new ChatCore({ apiBase: bases[i % bases.length], insecureTls: true });

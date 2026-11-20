@@ -115,23 +115,40 @@ details.server input { margin-top: 4px; }
 .compose { display: flex; gap: 8px; padding: 8px; background: var(--purple-50); }
 .compose textarea { flex: 1; height: 58px; resize: none; }
 .picker { position: absolute; bottom: 34px; left: 6px; background: var(--white); border: 1px solid var(--purple-500); border-radius: 6px; padding: 6px;
-  display: grid; grid-template-columns: repeat(6, 32px); gap: 4px; box-shadow: 0 4px 14px #0003; z-index: 5; }
-.picker-item { border: 1px solid transparent; background: none; border-radius: 4px; width: 32px; height: 32px; cursor: pointer; padding: 3px; }
+  display: grid; grid-template-columns: repeat(9, 34px); gap: 2px; max-height: 236px; overflow-y: auto; box-shadow: 0 4px 14px #0003; z-index: 5; }
+.picker-item { border: 1px solid transparent; background: none; border-radius: 4px; width: 34px; height: 34px; cursor: pointer; padding: 3px; }
 .picker-item:hover, .picker-item:focus-visible { border-color: var(--purple-500); background: var(--purple-50); }
-.picker-item svg { width: 24px; height: 24px; }
+.picker-item svg { width: 26px; height: 26px; }
 .flash { animation: flashbg .8s ease 2; }
 @keyframes flashbg { 50% { background: #ffe0ef; } }
 
-/* ---------- smiley ---------- */
-.smiley-wrap { display: inline-block; vertical-align: -5px; margin: 0 1px; }
+/* ---------- smiley (hình vẽ gốc của dự án) ---------- */
+.smiley-wrap { display: inline-block; vertical-align: -6px; margin: 0 1px; }
 .smiley { overflow: visible; }
 .sm-face { fill: #ffd21f; stroke: #c98a00; stroke-width: 1.2; }
 .sm-red .sm-face { fill: #ff7a3d; stroke: #b33a00; }
-.sm-shine { fill: #fff6; }
+.sm-green .sm-face { fill: #9bd36a; stroke: #4f8a2b; }
+.sm-purple .sm-face { fill: #a06ad6; stroke: #5a2d91; }
+.sm-face-fill { fill: #ffd21f; }
+.sm-stroke { stroke: #3a2600; stroke-width: .8; }
+.sm-shine { fill: #fff7; } .sm-shine2 { fill: #fff8; }
 .sm-eye { fill: #3a2600; } .sm-eyew { fill: #fff; stroke: #3a2600; stroke-width: .8; }
-.sm-line { fill: none; stroke: #3a2600; stroke-width: 1.7; stroke-linecap: round; }
+.sm-line { fill: none; stroke: #3a2600; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.sm-thin { stroke-width: 1; }
 .sm-mouth { fill: #6b1a00; } .sm-teeth { fill: #fff; } .sm-tongue { fill: #ff6f91; stroke: #3a2600; stroke-width: .8; }
 .sm-heart { fill: #e0245e; } .sm-shades { fill: #111; } .sm-tear { fill: #58b6ff; }
+.sm-frame { fill: none; stroke: #222; stroke-width: 1.3; } .sm-zip { fill: #c0c0c0; stroke: #555; stroke-width: .6; }
+.sm-blush { fill: #ff7f9e; opacity: .55; }
+.sm-halo { fill: none; stroke: #ffcc00; stroke-width: 1.8; }
+.sm-horn { fill: #d93838; stroke: #7a1010; stroke-width: .8; }
+.sm-phone { fill: #333; stroke: #000; stroke-width: .5; }
+.sm-hand { fill: #ffd21f; stroke: #c98a00; stroke-width: .9; stroke-linejoin: round; }
+.sm-cloud { fill: #fff; stroke: #9a8cb5; stroke-width: .8; }
+.sm-nose { fill: #e8202a; stroke: #8a0f14; stroke-width: .6; } .sm-hair { fill: #ff8a00; }
+.sm-text { fill: #6a2bb0; font-weight: 800; font-family: "Segoe UI", sans-serif; } .sm-lmark { fill: #2e8b2e; }
+.sm-hat { fill: #9a5b2a; stroke: #4e2c10; stroke-width: .7; } .sm-band { fill: #3b1f0b; stroke: #ffcc00; stroke-width: .8; }
+.sm-party { fill: #3fa9f5; stroke: #1b5fb4; stroke-width: .6; } .sm-pom { fill: #ffcc00; }
+.sm-watch { fill: #fff; stroke: #555; stroke-width: 1; }
 .sm-body { transform-origin: 16px 16px; transform-box: view-box; }
 .sm-bob .sm-body { animation: sm-bob 1.6s ease-in-out infinite; }
 .sm-droop .sm-body { animation: sm-droop 2.4s ease-in-out infinite; }
@@ -140,8 +157,12 @@ details.server input { margin-top: 4px; }
 .sm-pop .sm-body { animation: sm-pop 1.4s ease-in-out infinite; }
 .sm-pulse .sm-body { animation: sm-pulse 1.2s ease-in-out infinite; }
 .sm-shake .sm-body { animation: sm-shake .5s linear infinite; }
-.sm-roll .sm-body { animation: sm-roll 1.8s ease-in-out infinite; }
+.sm-spin .sm-body { animation: sm-spin 2.4s linear infinite; }
 .sm-tear { animation: sm-tear 1.4s ease-in infinite; } .sm-tear2 { animation-delay: .7s; }
+.sm-float { animation: sm-float 1.8s ease-in-out infinite; transform-box: view-box; } .sm-delay { animation-delay: .6s; }
+.sm-wave, .sm-hand-anim { transform-origin: 30px 22px; transform-box: view-box; animation: sm-wavehand .9s ease-in-out infinite; }
+.sm-clap { transform-origin: 16px 28px; transform-box: view-box; animation: sm-clap .5s ease-in-out infinite; }
+.sm-drip { animation: sm-tear 1.6s ease-in infinite; }
 @keyframes sm-bob { 50% { transform: translateY(-1.5px); } }
 @keyframes sm-droop { 50% { transform: translateY(1px) scaleY(.97); } }
 @keyframes sm-tilt { 25% { transform: rotate(-8deg); } 75% { transform: rotate(8deg); } }
@@ -149,10 +170,19 @@ details.server input { margin-top: 4px; }
 @keyframes sm-pop { 50% { transform: scale(1.15); } }
 @keyframes sm-pulse { 50% { transform: scale(1.1); } }
 @keyframes sm-shake { 25% { transform: translateX(-1px); } 75% { transform: translateX(1px); } }
-@keyframes sm-roll { 50% { transform: rotate(-15deg) translateY(-1px); } }
+@keyframes sm-spin { to { transform: rotate(360deg); } }
 @keyframes sm-tear { from { transform: translateY(0); opacity: 1; } to { transform: translateY(5px); opacity: 0; } }
+@keyframes sm-float { 50% { transform: translateY(-2px); } }
+@keyframes sm-wavehand { 50% { transform: rotate(-18deg); } }
+@keyframes sm-clap { 50% { transform: scaleX(.8); } }
 /* Giảm chuyển động: theo cài đặt ứng dụng hoặc hệ điều hành → hình tĩnh. */
 .reduce-motion .smiley *, .reduce-motion .flash { animation: none !important; }
 @media (prefers-reduced-motion: reduce) { .smiley *, .flash { animation: none !important; } }
 .login-sub { color: #e9ddf8; }
 .server-label { color: #efe6fa; }
+
+/* ---------- logo Zahu!Messenger ---------- */
+.logo-head { width: 36px; height: 36px; flex: none; filter: drop-shadow(0 1px 1px #0006); }
+.logo-big { width: 92px; height: 92px; filter: drop-shadow(0 3px 6px #0005); }
+.wordmark { margin-left: auto; font-weight: 800; font-style: italic; font-size: 15px; letter-spacing: .3px; text-shadow: 0 1px 0 #0004; white-space: nowrap; }
+.wordmark .bang { color: var(--focus); }

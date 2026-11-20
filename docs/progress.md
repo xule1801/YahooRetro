@@ -29,7 +29,9 @@ Tài liệu vận hành, tự rà soát bảo mật, quét lỗ hổng và giấ
 - Ruling: Presence đi qua XMPP; sự kiện realtime dùng headline XMPP thay vì WebSocket riêng — nếu sai: thêm kênh WS.
 - Ruling: Quản trị chỉ qua CLI/SSH, không có endpoint quản trị qua mạng — nếu sai: cần làm giao diện quản trị có MFA.
 - Ruling: Lời mời gửi tới người đã chặn mình vẫn trả 201 nhưng bị ẩn với người nhận (không lộ việc chặn); lịch sử chat sau khi chặn giữ tới khi hết hạn 30 ngày — nếu sai: đổi chính sách xóa lịch sử khi chặn.
-- Ruling: Buzz tới bạn chưa mở cửa sổ chat chỉ hiện thông báo, không tự mở cửa sổ, cùng quy tắc với cửa sổ thu nhỏ — nếu sai: tự mở cửa sổ chat ở chế độ không chiếm focus.
+- ~~Ruling: Buzz tới bạn chưa mở cửa sổ chat chỉ hiện thông báo~~ — **Thay ngày 2026-11-20 theo yêu cầu chủ dự án:** tin nhắn đến trực tiếp hoặc Buzz khi chưa mở cửa sổ chat → cửa sổ tự bật lên nổi trên cùng, không lấy focus bàn phím; Buzz thì rung. Cửa sổ thu nhỏ giữ đúng thiết kế §3.5 (chỉ thông báo). Có tùy chọn tắt "Tự mở cửa sổ chat". Tin từ đồng bộ lịch sử không bật cửa sổ.
+- Sự cố 2026-11-20: bộ test dùng chung database với máy chủ dùng thử nên `npm test` đã xóa 2 tài khoản dùng thử của chủ dự án. Đã sửa: test chạy trên bộ máy chủ riêng (`infra/.env.test`, project `yahoochat-test`), có chốt chặn `YC_TEST_STACK=1`; đã kiểm chứng DB dùng thử không đổi sau toàn bộ test.
+- Lỗi tìm thấy 2026-11-20 (test `session.e2e`): nút Đăng xuất làm thoát app (đóng hết cửa sổ trước khi mở màn hình đăng nhập) và để lõi chat rỗng. Đã sửa.
 - Ruling: Client không ghi lịch sử ra đĩa (chỉ trong bộ nhớ, đồng bộ lại từ MAM khi đăng nhập) — nếu sai: không xem được lịch sử khi offline.
 - Ruling: Mật khẩu tối thiểu 10 ký tự (thiết kế chưa quy định) — nếu sai: chỉnh một hằng số.
 - Ruling: Tên hiển thị tạm "Hoài Niệm Chat" thay cho "YahooChat" để tránh dùng thương hiệu Yahoo (thiết kế §4). **Đã được thay ngày 2026-11-20:** chủ dự án chốt tên **"Zahu!Messenger"** (tệp cài `ZahuMessenger`). Rủi ro gần nhãn hiệu "Yahoo! Messenger" đã ghi ở `docs/licenses.md`.
