@@ -1,0 +1,11 @@
+node_modules
+**/node_modules
+apps/windows/dist
+backups
+infra/.env
+infra/.env.test
+infra/prod/.env
+infra/prod/certs
+.git
+docs
+spike

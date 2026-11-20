@@ -1,0 +1,11 @@
+# HTTPS tự động cho API. YC_TLS_MODE = email (Let's Encrypt) hoặc "internal" (CA nội bộ, chỉ để thử local).
+{$YC_DOMAIN} {
+	tls {$YC_TLS_MODE}
+	encode gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		-Server
+	}
+	reverse_proxy api:8080
+}

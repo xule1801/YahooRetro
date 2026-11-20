@@ -8,7 +8,7 @@ import { migrate } from "./migrate.ts";
 import { systemClock } from "./clock.ts";
 import { createInvite, listInvites, revokeInvite } from "./modules/invites.ts";
 import { runPurge } from "./jobs/purge.ts";
-import { createBackup, pruneBackups, restoreBackup } from "./backup.ts";
+import { createBackup, pruneBackups, restoreBackup, encryptBuffer, decryptBuffer } from "./backup.ts";
 import { AppsvcXmpp, enqueue, flushOutbox } from "./xmpp-appsvc.ts";
 
 const HELP = `Zahu!Messenger — CLI quản trị
@@ -20,10 +20,26 @@ const HELP = `Zahu!Messenger — CLI quản trị
   backup create                                         Tạo backup mã hóa + xóa bản quá hạn giữ
   backup prune                                          Chỉ xóa backup quá hạn giữ
   backup restore <file> --target <db>                   Khôi phục vào database <db> (nên là DB mới)
+  backup encrypt < dump > file.enc                      Mã hóa dữ liệu từ stdin (dùng trong container, xem infra/prod/backup.sh)
+  backup decrypt < file.enc > dump                      Giải mã bản backup ra stdout
   sms-outbox                                            (Chỉ môi trường thử) xem SMS giả lập
 `;
 
 const [cmd, sub, ...rest] = process.argv.slice(2);
+
+// Mã hóa/giải mã luồng dữ liệu (không cần DB): dùng khi máy chủ chạy bằng Docker, không cài Node ngoài host.
+if (cmd === "backup" && (sub === "encrypt" || sub === "decrypt")) {
+  const key = process.env.YC_BACKUP_KEY;
+  if (!key) { console.error("Lỗi: thiếu YC_BACKUP_KEY"); process.exit(1); }
+  const chunks: Buffer[] = [];
+  for await (const c of process.stdin) chunks.push(c as Buffer);
+  const input = Buffer.concat(chunks);
+  if (!input.length) { console.error("Lỗi: stdin rỗng"); process.exit(1); }
+  const output = sub === "encrypt" ? encryptBuffer(input, key) : decryptBuffer(input, key);
+  process.stdout.write(output, () => process.exit(0));
+  await new Promise(() => {}); // chờ ghi xong stdout rồi thoát trong callback
+}
+
 const config = loadConfig();
 const db = createPool(config.databaseUrl);
 const out = (o: unknown) => console.log(typeof o === "string" ? o : JSON.stringify(o, null, 2));

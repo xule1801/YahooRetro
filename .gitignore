@@ -8,3 +8,5 @@ backups/
 /test-results/
 apps/windows/test-results/
 infra/.env.test
+infra/prod/.env
+infra/prod/certs/

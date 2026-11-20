@@ -8,7 +8,11 @@ export async function runPurge(db: Db, clock: Clock, ttlDays: number) {
   const cutoffEpoch = Math.floor(addMs(now, -ttlDays * DAY).getTime() / 1000);
   const dayAgo = addMs(now, -DAY);
   try {
-    const msgs = await db.query(`DELETE FROM public.prosodyarchive WHERE "when" < $1`, [cutoffEpoch]);
+    // Lần cài đầu: API có thể chạy job trước khi Prosody kịp tạo bảng lưu trữ → chưa có gì để xóa.
+    const hasArchive = (await db.query(`SELECT to_regclass('public.prosodyarchive') IS NOT NULL AS ok`)).rows[0].ok;
+    const msgs = hasArchive
+      ? await db.query(`DELETE FROM public.prosodyarchive WHERE "when" < $1`, [cutoffEpoch])
+      : { rowCount: 0 };
     await db.query("DELETE FROM app.registrations WHERE created_at < $1", [dayAgo]);
     await db.query("DELETE FROM app.recoveries WHERE created_at < $1", [dayAgo]);
     await db.query("DELETE FROM app.otp_sends WHERE sent_at < $1", [dayAgo]);

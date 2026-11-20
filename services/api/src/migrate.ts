@@ -16,7 +16,7 @@ export async function migrate(db: Db) {
       await c.query(readFileSync(join(dir, f), "utf8"));
       await c.query("INSERT INTO app.schema_migrations(name) VALUES ($1)", [f]);
       await c.query("COMMIT");
-      console.log("applied", f);
+      console.error("applied", f); // stderr: không làm bẩn stdout của các lệnh CLI dùng pipe
     } catch (e) { await c.query("ROLLBACK"); throw e; } finally { c.release(); }
   }
 }

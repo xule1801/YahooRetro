@@ -76,3 +76,25 @@ describe("backup → khôi phục cách ly", () => {
     await owner.end();
   }, 120000);
 });
+
+describe("job xóa trên DB mới cài", () => {
+  it("chưa có bảng của Prosody (Prosody chưa kịp khởi tạo) → job vẫn thành công, xóa 0", async () => {
+    const owner = new pg.Client({ connectionString: ownerUrl() });
+    await owner.connect();
+    await owner.query("DROP DATABASE IF EXISTS yc_purge_fresh");
+    await owner.query("CREATE DATABASE yc_purge_fresh");
+    await owner.end();
+    const fresh = createPool(ownerUrl().replace(/\/yahoochat$/, "/yc_purge_fresh"));
+    try {
+      await fresh.query("CREATE SCHEMA app");
+      const { migrate } = await import("../src/migrate.ts");
+      await migrate(fresh);
+      const res = await runPurge(fresh, systemClock, 30);
+      expect(res).toMatchObject({ ok: true, deleted: 0 });
+    } finally {
+      await fresh.end();
+      const o2 = new pg.Client({ connectionString: ownerUrl() }); await o2.connect();
+      await o2.query("DROP DATABASE IF EXISTS yc_purge_fresh"); await o2.end();
+    }
+  });
+});

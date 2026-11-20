@@ -1,0 +1,88 @@
+# Zahu!Messenger — MÔI TRƯỜNG THẬT (một máy chủ, vd Oracle Cloud). Secret lấy từ infra/prod/.env (không commit).
+# Cài đặt: sudo bash infra/prod/setup.sh <tên-miền> <email>   — xem docs/deploy-oracle.md
+# Công khai ra Internet CHỈ: 80 + 443 (Caddy → API, tự lấy chứng chỉ Let's Encrypt) và 5223 (chat XMPP qua TLS).
+# PostgreSQL và cổng XMPP nội bộ 5222 không mở ra ngoài.
+name: zahu
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: yahoochat
+      POSTGRES_USER: yc_owner
+      POSTGRES_PASSWORD: ${YC_PG_OWNER_PASSWORD:?}
+      YC_APP_DB_PASSWORD: ${YC_APP_DB_PASSWORD:?}
+      YC_PROSODY_DB_PASSWORD: ${YC_PROSODY_DB_PASSWORD:?}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ../postgres/init.sh:/docker-entrypoint-initdb.d/10-roles.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U yc_owner -d yahoochat"]
+      interval: 5s
+      retries: 30
+
+  prosody:
+    image: ${YC_PROSODY_IMAGE:?ghim image Prosody theo digest trong .env}
+    restart: unless-stopped
+    depends_on: { postgres: { condition: service_healthy } }
+    environment:
+      YC_DOMAIN: ${YC_DOMAIN:?}
+      YC_PROSODY_DB_PASSWORD: ${YC_PROSODY_DB_PASSWORD:?}
+      YC_XMPP_TOKEN_SECRET: ${YC_XMPP_TOKEN_SECRET:?}
+      YC_MESSAGE_TTL_DAYS: ${YC_MESSAGE_TTL_DAYS:-30}
+      YC_TLS_CERT_DIR: /etc/prosody/yc_certs
+    ports: ["${YC_XMPPS_PUBLISH:-5223}:5223"]
+    volumes:
+      - ../prosody/prosody.cfg.lua:/etc/prosody/prosody.cfg.lua:ro
+      - ../prosody/plugins:/etc/prosody/yc_plugins:ro
+      - ./certs:/etc/prosody/yc_certs:ro
+
+  api:
+    build: { context: ../.., dockerfile: services/api/Dockerfile }
+    image: zahu-api:local
+    restart: unless-stopped
+    depends_on: { postgres: { condition: service_healthy }, prosody: { condition: service_started } }
+    environment:
+      YC_DATABASE_URL: postgres://yc_app:${YC_APP_DB_PASSWORD:?}@postgres:5432/yahoochat
+      YC_DOMAIN: ${YC_DOMAIN:?}
+      YC_XMPP_SERVICE: xmpp://prosody:5222
+      YC_XMPP_PUBLIC_SERVICE: xmpps://${YC_DOMAIN}:${YC_XMPPS_PUBLIC_PORT:-5223}
+      YC_XMPP_TOKEN_SECRET: ${YC_XMPP_TOKEN_SECRET:?}
+      YC_OTP_SECRET: ${YC_OTP_SECRET:?}
+      YC_BACKUP_KEY: ${YC_BACKUP_KEY:?}
+      YC_TRUST_PROXY: "1"
+      YC_SMTP_HOST: ${YC_SMTP_HOST:-mailpit}
+      YC_SMTP_PORT: ${YC_SMTP_PORT:-1025}
+      YC_SMTP_USER: ${YC_SMTP_USER:-}
+      YC_SMTP_PASS: ${YC_SMTP_PASS:-}
+      YC_SMTP_SECURE: ${YC_SMTP_SECURE:-}
+      YC_SMTP_FROM: ${YC_SMTP_FROM:-Zahu!Messenger <no-reply@localhost>}
+      YC_SMS_PROVIDER: fake
+      YC_MESSAGE_TTL_DAYS: ${YC_MESSAGE_TTL_DAYS:-30}
+      YC_DEV_INSECURE_TLS: ${YC_DEV_INSECURE_TLS:-}   # CHỈ dùng khi thử bộ production trên máy local
+      YC_LOG_LEVEL: ${YC_LOG_LEVEL:-info}
+
+  caddy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    depends_on: [api]
+    environment:
+      YC_DOMAIN: ${YC_DOMAIN:?}
+      YC_TLS_MODE: ${YC_TLS_MODE:?email nhận thông báo Let's Encrypt, hoặc "internal" khi thử local}
+    ports: ["${YC_HTTP_PUBLISH:-80}:80", "${YC_HTTPS_PUBLISH:-443}:443"]
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+  # Hộp thư OTP nội bộ (chỉ khi CHƯA có dịch vụ email thật). Xem OTP qua đường hầm SSH: ssh -L 8025:127.0.0.1:8025 ...
+  mailpit:
+    image: axllent/mailpit:v1.27
+    restart: unless-stopped
+    profiles: ["mailpit"]
+    ports: ["127.0.0.1:${YC_MAILPIT_HTTP_PUBLISH:-8025}:8025"]
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:
