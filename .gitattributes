@@ -1,0 +1,4 @@
+# Luôn dùng LF: script và cấu hình chạy trong container Linux (init.sh, *.lua) sẽ lỗi nếu bị đổi sang CRLF.
+* text=auto eol=lf
+*.png binary
+*.exe binary
