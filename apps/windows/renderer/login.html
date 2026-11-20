@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'">
+<title>Zahu!Messenger — Đăng nhập</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="login-body">
+  <div class="login-logo">
+    <div id="logo" aria-hidden="true"></div>
+    <div class="brand">Zahu<span class="bang">!</span>Messenger</div>
+    <div class="hint login-sub">Chat hoài niệm cho nhóm bạn cũ</div>
+  </div>
+
+  <main class="login-card">
+    <div class="tabs" role="tablist">
+      <button role="tab" id="tab-login" aria-selected="true" aria-controls="pane-login">Đăng nhập</button>
+      <button role="tab" id="tab-register" aria-selected="false" aria-controls="pane-register">Đăng ký</button>
+      <button role="tab" id="tab-recover" aria-selected="false" aria-controls="pane-recover">Quên mật khẩu</button>
+    </div>
+
+    <form id="pane-login" role="tabpanel" aria-labelledby="tab-login">
+      <label for="li-id">Nick, email hoặc số điện thoại</label>
+      <input id="li-id" type="text" autocomplete="username" required>
+      <label for="li-pw">Mật khẩu</label>
+      <input id="li-pw" type="password" autocomplete="current-password" required>
+      <label class="check"><input id="li-remember" type="checkbox" checked> Ghi nhớ đăng nhập trên máy này</label>
+      <div class="error" id="li-err" role="alert"></div>
+      <div class="row end"><button class="btn primary" type="submit" id="li-submit">Đăng nhập</button></div>
+    </form>
+
+    <div id="pane-register" role="tabpanel" aria-labelledby="tab-register" class="hidden">
+      <form id="rg-step1">
+        <label for="rg-code">Mã mời (do quản trị viên cấp)</label>
+        <input id="rg-code" type="text" autocomplete="off" placeholder="XXXX-XXXX-XXXX" required>
+        <label>Xác minh qua</label>
+        <label class="radio"><input type="radio" name="rg-ch" value="email" checked> Email</label>
+        <label class="radio"><input type="radio" name="rg-ch" value="phone"> Số điện thoại</label>
+        <label for="rg-addr" id="rg-addr-label">Email</label>
+        <input id="rg-addr" type="email" required>
+        <div class="row end"><button class="btn primary" type="submit">Gửi mã xác thực</button></div>
+      </form>
+      <form id="rg-step2" class="hidden">
+        <p class="hint" id="rg-sent"></p>
+        <label for="rg-otp">Mã xác thực 6 số</label>
+        <input id="rg-otp" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code" required>
+        <div class="row end"><button class="btn" type="button" id="rg-back">Quay lại</button><button class="btn primary" type="submit">Xác minh</button></div>
+      </form>
+      <form id="rg-step3" class="hidden">
+        <label for="rg-nick">Nick (3–32 ký tự: chữ không dấu, số, _)</label>
+        <input id="rg-nick" type="text" maxlength="32" pattern="[A-Za-z0-9_]{3,32}" required>
+        <label for="rg-pw">Mật khẩu (tối thiểu 10 ký tự)</label>
+        <input id="rg-pw" type="password" minlength="10" autocomplete="new-password" required>
+        <label for="rg-pw2">Nhập lại mật khẩu</label>
+        <input id="rg-pw2" type="password" minlength="10" autocomplete="new-password" required>
+        <div class="row end"><button class="btn primary" type="submit">Tạo tài khoản</button></div>
+      </form>
+      <div class="error" id="rg-err" role="alert"></div>
+    </div>
+
+    <div id="pane-recover" role="tabpanel" aria-labelledby="tab-recover" class="hidden">
+      <form id="rc-step1">
+        <label for="rc-addr">Email hoặc số điện thoại đã đăng ký</label>
+        <input id="rc-addr" type="text" required>
+        <div class="row end"><button class="btn primary" type="submit">Gửi mã khôi phục</button></div>
+      </form>
+      <form id="rc-step2" class="hidden">
+        <p class="hint">Nếu địa chỉ đã đăng ký, bạn sẽ nhận được mã khôi phục.</p>
+        <label for="rc-otp">Mã khôi phục 6 số</label>
+        <input id="rc-otp" type="text" inputmode="numeric" maxlength="6" required>
+        <label for="rc-pw">Mật khẩu mới (tối thiểu 10 ký tự)</label>
+        <input id="rc-pw" type="password" minlength="10" autocomplete="new-password" required>
+        <div class="row end"><button class="btn primary" type="submit">Đặt lại mật khẩu</button></div>
+      </form>
+      <div class="error" id="rc-err" role="alert"></div>
+    </div>
+  </main>
+
+  <details class="server">
+    <summary>Máy chủ</summary>
+    <label for="api-base" class="server-label">Địa chỉ API</label>
+    <input id="api-base" type="url">
+    <div class="row end"><button class="btn small" id="api-save" type="button">Lưu</button></div>
+  </details>
+  <script type="module" src="login.js"></script>
+</body>
+</html>

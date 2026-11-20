@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'">
+<title>Zahu!Messenger</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="titlebar">
+    <div class="me">
+      <div class="me-nick"><span class="dot online" id="my-dot" aria-hidden="true"></span><span id="my-nick">…</span></div>
+      <div class="row">
+        <label class="sr-only" for="my-mode">Trạng thái của tôi</label>
+        <select id="my-mode">
+          <option value="online">Online</option>
+          <option value="busy">Bận</option>
+          <option value="away">Vắng mặt</option>
+          <option value="invisible">Ẩn</option>
+        </select>
+        <label class="sr-only" for="my-status">Dòng trạng thái</label>
+        <input id="my-status" type="text" maxlength="140" placeholder="Bạn đang nghĩ gì?">
+      </div>
+    </div>
+    <button class="icon-btn" id="btn-menu" title="Tài khoản và cài đặt" aria-label="Tài khoản và cài đặt" aria-expanded="false">☰</button>
+  </header>
+
+  <div class="toolbar">
+    <label class="sr-only" for="add-nick">Tìm nick chính xác</label>
+    <input id="add-nick" type="text" placeholder="Tìm nick để kết bạn" maxlength="32">
+    <button class="btn small" id="btn-add" title="Gửi lời mời kết bạn">Thêm</button>
+    <button class="btn small" id="btn-requests" title="Lời mời kết bạn">Lời mời<span class="badge hidden" id="req-badge">0</span></button>
+  </div>
+
+  <main class="list" id="list" aria-label="Danh bạ"></main>
+
+  <section class="panel hidden" id="panel" aria-live="polite"></section>
+  <div class="statusbar" id="statusbar" role="status">Đang kết nối…</div>
+  <script type="module" src="contacts.js"></script>
+</body>
+</html>

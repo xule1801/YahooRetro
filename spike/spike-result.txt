@@ -1,0 +1,10 @@
+ĐẠT      [6] Token ngắn hạn do dịch vụ ký — đúng=true, sai=bị từ chối, hết hạn=bị từ chối
+ĐẠT      [5] Chặn subscribe/Attention/roster-set từ client; appsvc tạo bạn được — subscribe=not-allowed, attention=not-allowed, roster-set=not-allowed, roster bob=both/Bạn học
+ĐẠT      [1] Tin gửi khi người nhận offline được giao khi online (đồng bộ MAM) — đẩy trực tiếp=false, qua MAM=true, lỗi trả về người gửi=không
+ĐẠT      [3] Buzz offline không phát lại, không vào MAM; Buzz online tới — phát lại=false, trong MAM=false, online nhận=true
+ĐẠT      [4] Ẩn: bạn thấy offline, vẫn nhận tin — lộ khi kết nối=false, lộ qua probe=false, nhận trực tiếp=false, nhận qua MAM=true
+… chờ 65 giây để tin vượt hạn 60s
+ĐẠT      [2] Tin quá hạn không trả qua MAM dù job dọn (daily) chưa chạy — trước hạn có=true, sau hạn còn trả=false
+
+Tổng: 6/6 đạt
+[{"id":6,"name":"Token ngắn hạn do dịch vụ ký","pass":true,"detail":"đúng=true, sai=bị từ chối, hết hạn=bị từ chối"},{"id":5,"name":"Chặn subscribe/Attention/roster-set từ client; appsvc tạo bạn được","pass":true,"detail":"subscribe=not-allowed, attention=not-allowed, roster-set=not-allowed, roster bob=both/Bạn học"},{"id":1,"name":"Tin gửi khi người nhận offline được giao khi online (đồng bộ MAM)","pass":true,"detail":"đẩy trực tiếp=false, qua MAM=true, lỗi trả về người gửi=không"},{"id":3,"name":"Buzz offline không phát lại, không vào MAM; Buzz online tới","pass":true,"detail":"phát lại=false, trong MAM=false, online nhận=true"},{"id":4,"name":"Ẩn: bạn thấy offline, vẫn nhận tin","pass":true,"detail":"lộ khi kết nối=false, lộ qua probe=false, nhận trực tiếp=false, nhận qua MAM=true"},{"id":2,"name":"Tin quá hạn không trả qua MAM dù job dọn (daily) chưa chạy","pass":true,"detail":"trước hạn có=true, sau hạn còn trả=false"}]

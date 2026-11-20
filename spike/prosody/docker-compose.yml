@@ -1,0 +1,9 @@
+# Spike Cổng 1 — CHỈ dùng cục bộ, tài khoản giả, không dữ liệu thật.
+services:
+  prosody:
+    image: prosodyim/prosody:13.0
+    ports:
+      - "127.0.0.1:5222:5222"
+    volumes:
+      - ./prosody.cfg.lua:/etc/prosody/prosody.cfg.lua:ro
+      - ./plugins:/etc/prosody/spike_plugins:ro

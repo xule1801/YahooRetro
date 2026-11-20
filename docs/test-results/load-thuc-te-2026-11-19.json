@@ -1,0 +1,82 @@
+{
+  "startedAt": "2026-11-19T09:22:24.346Z",
+  "env": {
+    "node": "v24.15.0",
+    "cpus": 20,
+    "cpuModel": "13th Gen Intel(R) Core(TM) i7-13650HX",
+    "memGB": 16,
+    "platform": "win32 10.0.26100"
+  },
+  "config": {
+    "label": "thuc-te",
+    "users": 100,
+    "connections": 30,
+    "msgsPerConnection": 10,
+    "avgGapMsPerSender": 2000,
+    "apiInstances": 2
+  },
+  "registrationMs": {
+    "n": 100,
+    "p50": 154.82160000000022,
+    "p95": 262.94979999999987,
+    "p99": 298.71439999999984,
+    "max": 298.71439999999984
+  },
+  "friendshipMs": {
+    "n": 300,
+    "p50": 224.63829999999962,
+    "p95": 330.4449999999997,
+    "p99": 385.3202999999994,
+    "max": 528.3098
+  },
+  "connectMs": {
+    "n": 30,
+    "p50": 206.98679999999877,
+    "p95": 247.57819999999992,
+    "p99": 247.60560000000078,
+    "max": 247.60560000000078
+  },
+  "messaging": {
+    "sent": 300,
+    "received": 300,
+    "lost": 0,
+    "duplicates": 0,
+    "serverAcked": 300,
+    "throughputMsgPerSec": 12.9,
+    "e2eLatencyMs": {
+      "n": 300,
+      "p50": 7.9209999999984575,
+      "p95": 126.16010000000097,
+      "p99": 132.65550000000076,
+      "max": 140.4352999999992
+    }
+  },
+  "buzzCrossInstance": {
+    "statuses": [
+      202,
+      429,
+      429,
+      429,
+      429,
+      429
+    ],
+    "accepted": 1,
+    "expectedAccepted": 1
+  },
+  "buzzMs": {
+    "n": 28,
+    "p50": 45.7696999999971,
+    "p95": 48.84939999999915,
+    "p99": 49.029999999998836,
+    "max": 49.029999999998836
+  },
+  "db": {
+    "archive_rows": 3600,
+    "db_size": "16 MB",
+    "connections": 22
+  },
+  "errors": [],
+  "errorCount": 0,
+  "finishedAt": "2026-11-19T09:22:58.519Z",
+  "verdict": "PASS (theo tiêu chí: không mất/trùng tin, rate-limit Buzz đúng qua nhiều bản API, không lỗi)"
+}

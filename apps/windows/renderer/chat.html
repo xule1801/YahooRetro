@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'">
+<title>Chat</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="titlebar chat-head">
+    <div>
+      <div class="peer"><span class="dot offline" id="peer-dot" aria-hidden="true"></span><span id="peer-nick">…</span></div>
+      <div class="peer-st" id="peer-st"></div>
+    </div>
+  </header>
+  <main class="history" id="history" role="log" aria-live="polite" aria-label="Lịch sử tin nhắn"></main>
+  <div class="chat-tools">
+    <button class="btn small" id="btn-smiley" aria-expanded="false" aria-controls="picker" title="Chọn biểu tượng cảm xúc">☺ Smiley</button>
+    <button class="btn small buzz" id="btn-buzz" title="Rung cửa sổ của bạn bè (chỉ khi họ đang online)">BUZZ!</button>
+    <span class="hint" id="tool-msg" role="status"></span>
+    <div class="picker hidden" id="picker" role="dialog" aria-label="Biểu tượng cảm xúc"></div>
+  </div>
+  <form class="compose" id="compose">
+    <label class="sr-only" for="input">Tin nhắn</label>
+    <textarea id="input" maxlength="4000" placeholder="Nhập tin nhắn… (Enter để gửi, Shift+Enter xuống dòng)"></textarea>
+    <button class="btn primary" type="submit">Gửi</button>
+  </form>
+  <script type="module" src="chat.js"></script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+{
+  "name": "@yc/api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node --env-file-if-exists=../../infra/.env --env-file-if-exists=.env src/server.ts",
+    "migrate": "node --env-file-if-exists=../../infra/.env --env-file-if-exists=.env src/migrate.ts",
+    "cli": "node --env-file-if-exists=../../infra/.env --env-file-if-exists=.env src/cli.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@xmpp/client": "^0.14.0",
+    "@yc/contracts": "1.0.0",
+    "argon2": "^0.45.2",
+    "fastify": "^5.12.8",
+    "nodemailer": "^10.6.0",
+    "pg": "^8.23.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "@types/nodemailer": "^8.0.2",
+    "@types/pg": "^8.23.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.12"
+  },
+  "license": "UNLICENSED"
+}

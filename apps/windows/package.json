@@ -1,0 +1,54 @@
+{
+  "name": "zahu-messenger-windows",
+  "productName": "ZahuMessenger",
+  "version": "0.1.0",
+  "description": "Ứng dụng chat hoài niệm cho nhóm bạn (MVP thử nghiệm nội bộ)",
+  "private": true,
+  "type": "module",
+  "main": "main/main.js",
+  "scripts": {
+    "sync-contracts": "node scripts/sync-contracts.js",
+    "prestart": "npm run sync-contracts",
+    "start": "node scripts/start.js",
+    "test": "node --test test/core.test.js",
+    "test:e2e": "node --test --test-concurrency=1 test/core.e2e.test.js",
+    "test:ui": "node --test --test-concurrency=1 test/ui.e2e.test.js",
+    "predist": "npm run sync-contracts",
+    "dist": "electron-builder --win nsis --x64"
+  },
+  "build": {
+    "appId": "local.zahu.messenger",
+    "productName": "ZahuMessenger",
+    "files": [
+      "main/**",
+      "core/**",
+      "renderer/**",
+      "assets/**",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "Zahu!Messenger"
+    },
+    "directories": {
+      "output": "dist"
+    },
+    "electronVersion": "43.8.12"
+  },
+  "devDependencies": {
+    "electron": "43.8.12",
+    "electron-builder": "^26.18.0",
+    "playwright-core": "^1.65.1"
+  },
+  "dependencies": {
+    "@yc/contracts": "1.0.0",
+    "@xmpp/client": "^0.14.0"
+  },
+  "author": "Nhóm dự án Zahu!Messenger",
+  "license": "UNLICENSED"
+}

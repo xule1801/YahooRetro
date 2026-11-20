@@ -1,0 +1,9 @@
+node_modules/
+infra/.env
+.env
+*.log
+dist/
+backups/
+.superpowers/
+/test-results/
+apps/windows/test-results/

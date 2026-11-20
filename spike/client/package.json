@@ -1,0 +1,1 @@
+{"name":"spike-client","private":true,"type":"module","scripts":{"spike":"node spike.mjs"},"dependencies":{"@xmpp/client":"^0.14.0"}}
