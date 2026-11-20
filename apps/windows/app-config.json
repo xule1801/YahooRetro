@@ -1,0 +1,4 @@
+{
+  "_ghi_chu": "Địa chỉ API máy chủ Zahu!Messenger được cài sẵn vào app lúc build (người dùng không sửa trong giao diện). Môi trường thật: đổi thành https://<tên-miền> rồi build lại. Lối tắt dùng thử có thể ghi đè bằng biến môi trường YC_API_BASE.",
+  "apiBase": "http://127.0.0.1:8090"
+}

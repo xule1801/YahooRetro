@@ -38,14 +38,14 @@ export class ChatCore extends EventEmitter {
         body: body !== undefined ? JSON.stringify(body) : undefined,
       });
     } catch {
-      throw new ApiError(0, { error: { code: "NETWORK", message: `Không kết nối được máy chủ ${this.apiBase}. Kiểm tra máy chủ đã chạy chưa và địa chỉ trong mục "Máy chủ" ở màn hình đăng nhập.` } });
+      throw new ApiError(0, { error: { code: "NETWORK", message: `Không kết nối được máy chủ ${this.apiBase}. Kiểm tra kết nối mạng; nếu vẫn lỗi, báo quản trị viên kiểm tra máy chủ.` } });
     }
     const text = await res.text();
     let data;
     try { data = text ? JSON.parse(text) : undefined; }
     catch {
       // Ví dụ: địa chỉ trỏ nhầm sang một website/ứng dụng khác trả về trang HTML.
-      throw new ApiError(res.status, { error: { code: "BAD_SERVER", message: `Địa chỉ ${this.apiBase} không phải máy chủ Zahu!Messenger. Kiểm tra mục "Máy chủ" ở màn hình đăng nhập.` } });
+      throw new ApiError(res.status, { error: { code: "BAD_SERVER", message: `Địa chỉ ${this.apiBase} không phải máy chủ Zahu!Messenger. Báo quản trị viên kiểm tra địa chỉ máy chủ của bản cài.` } });
     }
     if (!res.ok) {
       if (res.status === 401 && this.token && path !== "/v1/auth/login") this.emit("session-expired");

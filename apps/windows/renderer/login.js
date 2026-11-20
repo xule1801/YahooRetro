@@ -4,7 +4,6 @@ const params = new URLSearchParams(location.search);
 const st = await applySettings();
 $("#li-id").value = st.settings.lastIdentifier ?? "";
 $("#li-remember").checked = st.settings.rememberMe !== false;
-$("#api-base").value = st.settings.apiBase;
 if (params.get("message")) $("#li-err").textContent = params.get("message");
 ($("#li-id").value ? $("#li-pw") : $("#li-id")).focus();
 
@@ -90,9 +89,3 @@ $("#rc-step2").addEventListener("submit", (ev) => {
   }, $("#rc-err"));
 });
 
-// ---- máy chủ ----
-$("#api-save").addEventListener("click", async () => {
-  await yc.app("settings", { apiBase: $("#api-base").value.trim() });
-  await yc.app("newCore");
-  $("#li-err").textContent = "Đã lưu địa chỉ máy chủ.";
-});

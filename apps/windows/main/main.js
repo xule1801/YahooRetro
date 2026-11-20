@@ -17,11 +17,15 @@ app.setAppUserModelId(app.isPackaged ? "local.zahu.messenger" : "local.zahu.mess
 // ---------------------------------------------------------------- Cài đặt & phiên
 const settingsFile = () => join(app.getPath("userData"), "settings.json");
 const sessionFile = () => join(app.getPath("userData"), "session.bin");
-let settings = mergeSettings({}, process.env);
+// Địa chỉ máy chủ cài sẵn lúc build (apps/windows/app-config.json) — không có ô sửa trong giao diện.
+let APP_CONFIG = {};
+try { APP_CONFIG = JSON.parse(readFileSync(join(HERE, "../app-config.json"), "utf8")); } catch { /* dùng mặc định */ }
+const BUILD_DEFAULTS = APP_CONFIG.apiBase ? { apiBase: APP_CONFIG.apiBase } : {};
+let settings = mergeSettings({}, process.env, BUILD_DEFAULTS);
 function loadSettings() {
   let saved = {};
   try { saved = JSON.parse(readFileSync(settingsFile(), "utf8")); } catch { /* lần đầu */ }
-  settings = mergeSettings(saved, process.env);
+  settings = mergeSettings(saved, process.env, BUILD_DEFAULTS);
 }
 // Không bao giờ ghi insecureTls xuống đĩa (xem mergeSettings).
 const saveSettings = () => writeFileSync(settingsFile(), JSON.stringify(mergeSettings.persistable(settings), null, 2));
@@ -191,7 +195,7 @@ ipcMain.handle("app", wrap(async (action, args) => {
       me: core?.me ?? null, mode: core?.mode ?? "online", statusText: core?.statusText ?? "", online: !!core?.online,
       settings: { ...settings },
     };
-    case "settings": settings = { ...settings, ...pick(args[0], ["reduceMotion", "buzzVibrate", "buzzSound", "autoOpenChat", "rememberMe", "apiBase"]) }; saveSettings(); broadcast("settings", settings); return settings;
+    case "settings": settings = { ...settings, ...pick(args[0], ["reduceMotion", "buzzVibrate", "buzzSound", "autoOpenChat", "rememberMe"]) }; saveSettings(); broadcast("settings", settings); return settings;
     case "login": {
       createCore();
       await core.login(args[0], args[1]);
@@ -205,7 +209,6 @@ ipcMain.handle("app", wrap(async (action, args) => {
     case "logout": await logout(); return true;
     case "openChat": openChat(args[0]); return true;
     case "openContacts": openContacts(); return true;
-    case "newCore": createCore(); return true;
     default: throw new Error("Không rõ hành động: " + action);
   }
 }));

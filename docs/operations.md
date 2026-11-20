@@ -96,7 +96,7 @@ Gửi mã mời cho người được mời qua kênh riêng (gặp trực tiế
 7. **Bỏ** `YC_DEV_INSECURE_TLS`.
 8. **Chạy API như một dịch vụ** (systemd hoặc container) với `npm run api`. Có thể chạy nhiều bản sau cùng một proxy: giới hạn Buzz/đăng nhập nằm trong DB, đã thử với 2 bản.
 9. Đặt lịch **backup hằng ngày** (cron), xem mục 8.
-10. Client: trên màn hình đăng nhập, mở "Máy chủ" và nhập `https://chat.<tên-miền>`. Client từ chối `http://` tới máy không phải localhost.
+10. **Client:** địa chỉ máy chủ được **cài sẵn vào app lúc build**; giao diện không có ô sửa. Sửa `apps/windows/app-config.json` thành `"apiBase": "https://chat.<tên-miền>"`, rồi chạy `npm run client:dist` và phát bản cài mới. Client từ chối `http://` tới máy không phải localhost.
 
 ## 6. Đổi secret
 

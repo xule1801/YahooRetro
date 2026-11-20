@@ -113,7 +113,8 @@ test("địa chỉ máy chủ sai (trả HTML) → thông báo dễ hiểu, khô
   await assert.rejects(c.registerStart("X", "email", "a@b.c"), (e) => {
     assert.equal(e.code, "BAD_SERVER");
     assert.match(e.message, /127\.0\.0\.1:8080/);
-    assert.match(e.message, /Máy chủ/);
+    assert.match(e.message, /quản trị viên/);
+    assert.doesNotMatch(e.message, /mục "Máy chủ"/);
     assert.doesNotMatch(e.message, /Unexpected token|JSON/);
     return true;
   });
@@ -163,4 +164,11 @@ test("chế độ bỏ kiểm tra chứng chỉ (dev/dùng thử) CHỈ áp dụ
   assert.throws(() => assertSecureEndpoint("https://chat.example.vn", true), /chỉ dùng cho máy chủ trên chính máy này/);
   assert.throws(() => assertSecureEndpoint("xmpps://10.0.0.5:5223", true), /chỉ dùng cho máy chủ trên chính máy này/);
   assert.throws(() => new ChatCore({ apiBase: "https://chat.example.vn", insecureTls: true }), /chỉ dùng cho máy chủ trên chính máy này/);
+});
+
+test("địa chỉ máy chủ: lấy từ cấu hình cài sẵn của bản build; bỏ qua giá trị cũ trong settings.json; biến môi trường (lối tắt dùng thử) ghi đè được", () => {
+  const defaults = { apiBase: "https://chat.zahu.example" };
+  assert.equal(mergeSettings({ apiBase: "http://127.0.0.1:8080" }, {}, defaults).apiBase, "https://chat.zahu.example");
+  assert.equal(mergeSettings({}, { YC_API_BASE: "http://127.0.0.1:8090" }, defaults).apiBase, "http://127.0.0.1:8090");
+  assert.equal("apiBase" in mergeSettings.persistable({ apiBase: "x", buzzSound: true }), false);
 });

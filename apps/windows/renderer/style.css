@@ -56,9 +56,6 @@ label { display: block; font-weight: 600; margin: 10px 0 4px; color: var(--purpl
 .row { display: flex; gap: 8px; align-items: center; }
 .row.end { justify-content: flex-end; margin-top: 12px; }
 .radio { display: inline-flex; gap: 4px; align-items: center; font-weight: 400; margin: 0 12px 0 0; color: var(--ink); }
-details.server { margin: 10px 16px; color: var(--purple-100); font-size: 12px; }
-details.server summary { cursor: pointer; }
-details.server input { margin-top: 4px; }
 
 /* ---------- danh bạ ---------- */
 .me { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
@@ -179,7 +176,6 @@ details.server input { margin-top: 4px; }
 .reduce-motion .smiley *, .reduce-motion .flash { animation: none !important; }
 @media (prefers-reduced-motion: reduce) { .smiley *, .flash { animation: none !important; } }
 .login-sub { color: #e9ddf8; }
-.server-label { color: #efe6fa; }
 
 /* ---------- logo Zahu!Messenger ---------- */
 .logo-head { width: 36px; height: 36px; flex: none; filter: drop-shadow(0 1px 1px #0006); }

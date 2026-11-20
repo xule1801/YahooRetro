@@ -104,13 +104,13 @@ function byServerTs(a, b) {
 }
 const rank = (s) => ({ sending: 0, failed: 0, stored: 1, delivered: 2 })[s] ?? 0;
 
-const SAVED_KEYS = ["apiBase", "reduceMotion", "buzzVibrate", "buzzSound", "autoOpenChat", "rememberMe", "lastIdentifier"];
+const SAVED_KEYS = ["reduceMotion", "buzzVibrate", "buzzSound", "autoOpenChat", "rememberMe", "lastIdentifier"];
 /**
  * Gộp cài đặt đã lưu với biến môi trường. `insecureTls` (bỏ kiểm tra chứng chỉ — chỉ cho máy thử nghiệm)
  * CHỈ lấy từ biến môi trường của lần chạy hiện tại, không bao giờ đọc/ghi tệp cài đặt.
  */
 export function mergeSettings(saved, env, defaults = {}) {
-  const s = { apiBase: "http://127.0.0.1:8080", reduceMotion: false, buzzVibrate: true, buzzSound: true, autoOpenChat: true, rememberMe: true, lastIdentifier: "", ...defaults };
+  const s = { apiBase: "http://127.0.0.1:8090", reduceMotion: false, buzzVibrate: true, buzzSound: true, autoOpenChat: true, rememberMe: true, lastIdentifier: "", ...defaults };
   for (const k of SAVED_KEYS) if (saved && k in saved) s[k] = saved[k];
   if (env.YC_API_BASE) s.apiBase = env.YC_API_BASE;
   s.insecureTls = env.YC_DEV_INSECURE_TLS === "1";

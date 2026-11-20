@@ -26,7 +26,8 @@
       "core/**",
       "renderer/**",
       "assets/**",
-      "package.json"
+      "package.json",
+      "app-config.json"
     ],
     "win": {
       "target": "nsis",
